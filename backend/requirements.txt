@@ -7,3 +7,4 @@ scipy>=1.13.0
 numpy>=1.26.2
 matplotlib>=3.8.2
 networkx==3.2.1
+contextily>=1.6.0
