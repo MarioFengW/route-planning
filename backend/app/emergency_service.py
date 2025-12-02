@@ -8,6 +8,7 @@ from typing import List, Tuple, Dict, Optional
 import matplotlib
 matplotlib.use('Agg')  # Use non-interactive backend
 import matplotlib.pyplot as plt
+import contextily as ctx
 from .map_loader import MapLoader
 from .kdtree import KDTree
 from .search_algorithms import SearchAlgorithms
@@ -246,7 +247,7 @@ class EmergencyService:
     def visualize_voronoi(self, filename: str = 'voronoi_diagram.png', 
                          show_map: bool = True):
         """
-        Visualize Voronoi partition
+        Visualize Voronoi partition with satellite imagery background
         
         Args:
             filename: Output filename for the plot
@@ -257,46 +258,82 @@ class EmergencyService:
         
         print(f"Creating Voronoi visualization: {filename}")
         
-        fig, ax = plt.subplots(figsize=(12, 10))
+        # Get coordinates in lat/lon (not converted)
+        hospital_lons = [h['lon'] for h in self.hospitals]
+        hospital_lats = [h['lat'] for h in self.hospitals]
         
-        # Plot Voronoi diagram
+        # Create figure with larger size for better detail
+        fig, ax = plt.subplots(figsize=(16, 14))
+        
+        # Plot Voronoi diagram FIRST (in converted coordinates)
         voronoi_plot_2d(self.voronoi, ax=ax, show_vertices=False, 
-                       line_colors='blue', line_width=2, point_size=10)
+                       line_colors='cyan', line_width=3, point_size=0)
         
-        # Plot hospital points
+        # Get the axis limits BEFORE adding basemap
+        xlim = ax.get_xlim()
+        ylim = ax.get_ylim()
+        
+        # Convert axis limits back to lat/lon for basemap
+        # The voronoi uses converted coordinates, we need original lat/lon bounds
+        coords, _ = self.map_loader.get_all_nodes_coords()
+        coords_array = np.array(coords)
+        min_lon, max_lon = coords_array[:, 0].min(), coords_array[:, 0].max()
+        min_lat, max_lat = coords_array[:, 1].min(), coords_array[:, 1].max()
+        
+        # Add satellite basemap using contextily
+        # ESRI World Imagery (same as your frontend)
+        try:
+            print("Adding satellite imagery basemap...")
+            ctx.add_basemap(
+                ax,
+                crs='EPSG:4326',  # WGS84 coordinate system (lat/lon)
+                source=ctx.providers.Esri.WorldImagery,
+                attribution=False,
+                alpha=0.7,
+                zoom='auto'
+            )
+        except Exception as e:
+            print(f"Warning: Could not add basemap: {e}")
+            print("Continuing without satellite background...")
+        
+        # Restore axis limits
+        ax.set_xlim(xlim)
+        ax.set_ylim(ylim)
+        
+        # Plot hospital points ON TOP with proper coordinates
         hospital_points = np.array([[self.map_loader.latlon_to_xy(h['lat'], h['lon'])[0],
                                     self.map_loader.latlon_to_xy(h['lat'], h['lon'])[1]] 
                                    for h in self.hospitals])
         
-        ax.plot(hospital_points[:, 0], hospital_points[:, 1], 'r+', 
-               markersize=20, markeredgewidth=3, label='Hospitals')
+        ax.plot(hospital_points[:, 0], hospital_points[:, 1], 'r*', 
+               markersize=30, markeredgewidth=2, markeredgecolor='white',
+               label='Hospitals', zorder=1000)
         
-        # Add hospital labels
+        # Add hospital labels with high contrast
         for i, hospital in enumerate(self.hospitals):
             x, y = self.map_loader.latlon_to_xy(hospital['lat'], hospital['lon'])
             ax.annotate(hospital['name'], (x, y), 
-                       xytext=(5, 5), textcoords='offset points',
-                       fontsize=8, fontweight='bold',
-                       bbox=dict(boxstyle='round,pad=0.3', facecolor='yellow', alpha=0.7))
+                       xytext=(8, 8), textcoords='offset points',
+                       fontsize=7, fontweight='bold',
+                       color='white',
+                       bbox=dict(boxstyle='round,pad=0.3', facecolor='red', 
+                                edgecolor='white', linewidth=1.5, alpha=0.9),
+                       zorder=1001,
+                       arrowprops=dict(arrowstyle='->', color='white', lw=1.5))
         
-        # Optionally show map nodes
-        if show_map:
-            coords, _ = self.map_loader.get_all_nodes_coords()
-            coords_array = np.array(coords)
-            ax.plot(coords_array[:, 0], coords_array[:, 1], 'k.', 
-                   markersize=0.5, alpha=0.3, label='Map nodes')
-        
-        ax.set_xlabel('Longitude')
-        ax.set_ylabel('Latitude')
-        ax.set_title('Voronoi Partition - Hospital Service Areas')
-        ax.legend()
-        ax.grid(True, alpha=0.3)
+        ax.set_xlabel('Longitude', fontsize=12, fontweight='bold')
+        ax.set_ylabel('Latitude', fontsize=12, fontweight='bold')
+        ax.set_title('Voronoi Partition - Hospital Service Areas\n(Satellite Imagery Background)', 
+                    fontsize=14, fontweight='bold', pad=20)
+        ax.legend(loc='upper right', fontsize=11, framealpha=0.95, 
+                 edgecolor='black', fancybox=True)
         
         plt.tight_layout()
-        plt.savefig(filename, dpi=150, bbox_inches='tight')
+        plt.savefig(filename, dpi=300, bbox_inches='tight', facecolor='white')
         plt.close()
         
         print(f"Voronoi diagram saved to {filename}")
+
     
     def get_service_area_info(self) -> Dict:
         """
