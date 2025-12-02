@@ -227,7 +227,8 @@ def build_kdtree():
         
         return jsonify({
             "success": True,
-            "construction_time": construction_time,
+            "build_time": construction_time,  # Changed from construction_time
+            "construction_time": construction_time,  # Keep for backwards compatibility
             "stats": kdtree.get_stats()
         })
     

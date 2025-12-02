@@ -43,6 +43,7 @@ class KDTreeEvaluator:
         
         stats = self.kdtree.get_stats()
         stats['construction_time'] = construction_time
+        stats['build_time'] = construction_time  # Add for frontend compatibility
         
         print(f"KD-Tree built with {stats['nodes_count']} nodes in {construction_time:.6f} seconds")
         

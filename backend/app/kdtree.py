@@ -108,7 +108,7 @@ class KDTree:
             query_point: (x, y) coordinates to search from
             
         Returns:
-            Tuple of (node_id, distance, search_time)
+            Tuple of (node_id, distance_in_meters, search_time)
         """
         start_time = time.time()
         
@@ -122,7 +122,12 @@ class KDTree:
         
         search_time = time.time() - start_time
         
-        return best_node.node_id, best_distance, search_time
+        # Convert distance from degrees to meters
+        # Approximate: 1 degree ≈ 111,000 meters at the equator
+        # Using Euclidean distance in lat/lon space, we convert to meters
+        distance_in_meters = best_distance * 111000  # Rough approximation
+        
+        return best_node.node_id, distance_in_meters, search_time
     
     def _nearest_recursive(self, node: Optional[KDNode], query: np.ndarray, 
                           best_node: Optional[KDNode], best_distance: float) -> Tuple[KDNode, float]:
@@ -254,7 +259,7 @@ def exhaustive_search(points: List[Tuple[float, float]], node_ids: List[int],
         query_point: Query point
         
     Returns:
-        Tuple of (node_id, distance, search_time)
+        Tuple of (node_id, distance_in_meters, search_time)
     """
     start_time = time.time()
     
@@ -270,4 +275,7 @@ def exhaustive_search(points: List[Tuple[float, float]], node_ids: List[int],
     
     search_time = time.time() - start_time
     
-    return nearest_id, min_distance, search_time
+    # Convert distance from degrees to meters
+    distance_in_meters = min_distance * 111000  # Rough approximation
+    
+    return nearest_id, distance_in_meters, search_time

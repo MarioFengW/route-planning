@@ -53,35 +53,24 @@
     <div class="bg-white border border-gray-200 p-5">
       <h3 class="text-base font-medium text-gray-900 mb-3">Step 2: Evaluate Performance</h3>
       <p class="text-sm text-gray-600 mb-4">
-        Search for 20 locations and compare KD-Tree vs exhaustive search performance.
+        Search for random locations within map bounds and compare KD-Tree vs exhaustive search performance.
       </p>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            Number of Locations
-          </label>
-          <input
-            v-model.number="numLocations"
-            type="number"
-            min="1"
-            max="100"
-            class="w-full px-4 py-2 border border-gray-300 focus:ring-1 focus:ring-royal-blue-500 focus:border-royal-blue-500"
-          />
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            Location Type
-          </label>
-          <select
-            v-model="useRealLocations"
-            class="w-full px-4 py-2 border border-gray-300 focus:ring-1 focus:ring-royal-blue-500 focus:border-royal-blue-500"
-          >
-            <option :value="true">Real locations (from map bounds)</option>
-            <option :value="false">Random locations</option>
-          </select>
-        </div>
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 mb-2">
+          Number of Random Locations
+        </label>
+        <input
+          v-model.number="numLocations"
+          type="number"
+          min="1"
+          max="100"
+          class="w-full px-4 py-2 border border-gray-300 focus:ring-1 focus:ring-royal-blue-500 focus:border-royal-blue-500"
+          placeholder="Enter number of locations (default: 20)"
+        />
+        <p class="text-xs text-gray-500 mt-1">
+          Random locations will be generated within the map bounds
+        </p>
       </div>
 
       <button
@@ -245,8 +234,9 @@
       <h4 class="font-medium text-royal-blue-900 mb-2">Instructions</h4>
       <ol class="text-sm text-blue-800 space-y-1 list-decimal list-inside">
         <li>Build the KD-Tree from all graph vertices</li>
-        <li>Configure the number of test locations (default: 20)</li>
+        <li>Configure the number of random test locations (default: 20)</li>
         <li>Run evaluation to compare KD-Tree vs exhaustive search</li>
+        <li>Random locations will be generated within the map bounds</li>
         <li>Analyze the performance difference and speedup factor</li>
         <li>Export results for your report</li>
       </ol>
@@ -281,7 +271,6 @@ const evaluationResults = ref(null)
 
 // Form data
 const numLocations = ref(20)
-const useRealLocations = ref(true)
 
 // Computed
 const highlightedNodes = computed(() => {
@@ -317,7 +306,8 @@ const runEvaluation = async () => {
   successMessage.value = null
 
   try {
-    const result = await api.evaluateKdTree(numLocations.value, useRealLocations.value)
+    // Always use random locations (use_real_locations = false)
+    const result = await api.evaluateKdTree(numLocations.value, false)
     evaluationResults.value = result
     successMessage.value = `Evaluation completed! KD-Tree is ${(result.speedup_factor || 0).toFixed(2)}x faster`
     
