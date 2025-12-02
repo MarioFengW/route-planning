@@ -1,0 +1,430 @@
+{
+  "kdtree_construction": {
+    "nodes_count": 195,
+    "construction_time": 0.0016827583312988281,
+    "dimensions": 2
+  },
+  "test_locations": [
+    {
+      "lat": 20.7307925,
+      "lon": -103.4481843
+    },
+    {
+      "lat": 20.7327995,
+      "lon": -103.4603442
+    },
+    {
+      "lat": 20.7388435,
+      "lon": -103.4636743
+    },
+    {
+      "lat": 20.7380211,
+      "lon": -103.458673
+    },
+    {
+      "lat": 20.7383046,
+      "lon": -103.4605972
+    },
+    {
+      "lat": 20.7369408,
+      "lon": -103.4598815
+    },
+    {
+      "lat": 20.7351259,
+      "lon": -103.4503849
+    },
+    {
+      "lat": 20.7364162,
+      "lon": -103.4605755
+    },
+    {
+      "lat": 20.7306746,
+      "lon": -103.4482018
+    },
+    {
+      "lat": 20.740687,
+      "lon": -103.4485967
+    },
+    {
+      "lat": 20.7350921,
+      "lon": -103.4502744
+    },
+    {
+      "lat": 20.73527,
+      "lon": -103.4581355
+    },
+    {
+      "lat": 20.7391077,
+      "lon": -103.4640791
+    },
+    {
+      "lat": 20.7405788,
+      "lon": -103.4486292
+    },
+    {
+      "lat": 20.7355259,
+      "lon": -103.4582128
+    },
+    {
+      "lat": 20.7398698,
+      "lon": -103.4644251
+    },
+    {
+      "lat": 20.737417,
+      "lon": -103.464676
+    },
+    {
+      "lat": 20.7391452,
+      "lon": -103.4644859
+    },
+    {
+      "lat": 20.7405494,
+      "lon": -103.4481177
+    },
+    {
+      "lat": 20.7358983,
+      "lon": -103.4595615
+    }
+  ],
+  "comparison": {
+    "num_locations": 20,
+    "kdtree": {
+      "results": [
+        {
+          "location_index": 0,
+          "query_lat": 20.7307925,
+          "query_lon": -103.4481843,
+          "nearest_node": 6563276547,
+          "distance": 0.0,
+          "search_time": 7.462501525878906e-05
+        },
+        {
+          "location_index": 1,
+          "query_lat": 20.7327995,
+          "query_lon": -103.4603442,
+          "nearest_node": 6135760278,
+          "distance": 0.0,
+          "search_time": 4.410743713378906e-05
+        },
+        {
+          "location_index": 2,
+          "query_lat": 20.7388435,
+          "query_lon": -103.4636743,
+          "nearest_node": 1866809526,
+          "distance": 0.0,
+          "search_time": 5.650520324707031e-05
+        },
+        {
+          "location_index": 3,
+          "query_lat": 20.7380211,
+          "query_lon": -103.458673,
+          "nearest_node": 1866809435,
+          "distance": 0.0,
+          "search_time": 4.172325134277344e-05
+        },
+        {
+          "location_index": 4,
+          "query_lat": 20.7383046,
+          "query_lon": -103.4605972,
+          "nearest_node": 1866809465,
+          "distance": 0.0,
+          "search_time": 3.1948089599609375e-05
+        },
+        {
+          "location_index": 5,
+          "query_lat": 20.7369408,
+          "query_lon": -103.4598815,
+          "nearest_node": 1866809269,
+          "distance": 0.0,
+          "search_time": 2.6702880859375e-05
+        },
+        {
+          "location_index": 6,
+          "query_lat": 20.7351259,
+          "query_lon": -103.4503849,
+          "nearest_node": 6143684010,
+          "distance": 0.0,
+          "search_time": 3.0517578125e-05
+        },
+        {
+          "location_index": 7,
+          "query_lat": 20.7364162,
+          "query_lon": -103.4605755,
+          "nearest_node": 1866809200,
+          "distance": 0.0,
+          "search_time": 3.0279159545898438e-05
+        },
+        {
+          "location_index": 8,
+          "query_lat": 20.7306746,
+          "query_lon": -103.4482018,
+          "nearest_node": 6563276549,
+          "distance": 0.0,
+          "search_time": 2.956390380859375e-05
+        },
+        {
+          "location_index": 9,
+          "query_lat": 20.740687,
+          "query_lon": -103.4485967,
+          "nearest_node": 8297499195,
+          "distance": 0.0,
+          "search_time": 2.956390380859375e-05
+        },
+        {
+          "location_index": 10,
+          "query_lat": 20.7350921,
+          "query_lon": -103.4502744,
+          "nearest_node": 8366634694,
+          "distance": 0.0,
+          "search_time": 2.574920654296875e-05
+        },
+        {
+          "location_index": 11,
+          "query_lat": 20.73527,
+          "query_lon": -103.4581355,
+          "nearest_node": 1866808984,
+          "distance": 0.0,
+          "search_time": 2.9325485229492188e-05
+        },
+        {
+          "location_index": 12,
+          "query_lat": 20.7391077,
+          "query_lon": -103.4640791,
+          "nearest_node": 1866809583,
+          "distance": 0.0,
+          "search_time": 3.0279159545898438e-05
+        },
+        {
+          "location_index": 13,
+          "query_lat": 20.7405788,
+          "query_lon": -103.4486292,
+          "nearest_node": 4321118556,
+          "distance": 0.0,
+          "search_time": 2.5987625122070312e-05
+        },
+        {
+          "location_index": 14,
+          "query_lat": 20.7355259,
+          "query_lon": -103.4582128,
+          "nearest_node": 1866808993,
+          "distance": 0.0,
+          "search_time": 2.9802322387695312e-05
+        },
+        {
+          "location_index": 15,
+          "query_lat": 20.7398698,
+          "query_lon": -103.4644251,
+          "nearest_node": 1866809655,
+          "distance": 0.0,
+          "search_time": 2.6464462280273438e-05
+        },
+        {
+          "location_index": 16,
+          "query_lat": 20.737417,
+          "query_lon": -103.464676,
+          "nearest_node": 1866809329,
+          "distance": 0.0,
+          "search_time": 2.9802322387695312e-05
+        },
+        {
+          "location_index": 17,
+          "query_lat": 20.7391452,
+          "query_lon": -103.4644859,
+          "nearest_node": 1866809595,
+          "distance": 0.0,
+          "search_time": 2.9325485229492188e-05
+        },
+        {
+          "location_index": 18,
+          "query_lat": 20.7405494,
+          "query_lon": -103.4481177,
+          "nearest_node": 8297499196,
+          "distance": 0.0,
+          "search_time": 2.9087066650390625e-05
+        },
+        {
+          "location_index": 19,
+          "query_lat": 20.7358983,
+          "query_lon": -103.4595615,
+          "nearest_node": 1866809065,
+          "distance": 0.0,
+          "search_time": 2.574920654296875e-05
+        }
+      ],
+      "avg_time": 3.3855438232421875e-05,
+      "min_time": 2.574920654296875e-05,
+      "max_time": 7.462501525878906e-05,
+      "total_time": 0.0006771087646484375
+    },
+    "exhaustive": {
+      "results": [
+        {
+          "location_index": 0,
+          "query_lat": 20.7307925,
+          "query_lon": -103.4481843,
+          "nearest_node": 6563276547,
+          "distance": 0.0,
+          "search_time": 0.0008685588836669922
+        },
+        {
+          "location_index": 1,
+          "query_lat": 20.7327995,
+          "query_lon": -103.4603442,
+          "nearest_node": 6135760278,
+          "distance": 0.0,
+          "search_time": 0.0011780261993408203
+        },
+        {
+          "location_index": 2,
+          "query_lat": 20.7388435,
+          "query_lon": -103.4636743,
+          "nearest_node": 1866809526,
+          "distance": 0.0,
+          "search_time": 0.0009777545928955078
+        },
+        {
+          "location_index": 3,
+          "query_lat": 20.7380211,
+          "query_lon": -103.458673,
+          "nearest_node": 1866809435,
+          "distance": 0.0,
+          "search_time": 0.001329183578491211
+        },
+        {
+          "location_index": 4,
+          "query_lat": 20.7383046,
+          "query_lon": -103.4605972,
+          "nearest_node": 1866809465,
+          "distance": 0.0,
+          "search_time": 0.0012290477752685547
+        },
+        {
+          "location_index": 5,
+          "query_lat": 20.7369408,
+          "query_lon": -103.4598815,
+          "nearest_node": 1866809269,
+          "distance": 0.0,
+          "search_time": 0.001413106918334961
+        },
+        {
+          "location_index": 6,
+          "query_lat": 20.7351259,
+          "query_lon": -103.4503849,
+          "nearest_node": 6143684010,
+          "distance": 0.0,
+          "search_time": 0.0008444786071777344
+        },
+        {
+          "location_index": 7,
+          "query_lat": 20.7364162,
+          "query_lon": -103.4605755,
+          "nearest_node": 1866809200,
+          "distance": 0.0,
+          "search_time": 0.001165628433227539
+        },
+        {
+          "location_index": 8,
+          "query_lat": 20.7306746,
+          "query_lon": -103.4482018,
+          "nearest_node": 6563276549,
+          "distance": 0.0,
+          "search_time": 0.0009946823120117188
+        },
+        {
+          "location_index": 9,
+          "query_lat": 20.740687,
+          "query_lon": -103.4485967,
+          "nearest_node": 8297499195,
+          "distance": 0.0,
+          "search_time": 0.0006844997406005859
+        },
+        {
+          "location_index": 10,
+          "query_lat": 20.7350921,
+          "query_lon": -103.4502744,
+          "nearest_node": 8366634694,
+          "distance": 0.0,
+          "search_time": 0.0006859302520751953
+        },
+        {
+          "location_index": 11,
+          "query_lat": 20.73527,
+          "query_lon": -103.4581355,
+          "nearest_node": 1866808984,
+          "distance": 0.0,
+          "search_time": 0.00078582763671875
+        },
+        {
+          "location_index": 12,
+          "query_lat": 20.7391077,
+          "query_lon": -103.4640791,
+          "nearest_node": 1866809583,
+          "distance": 0.0,
+          "search_time": 0.0007040500640869141
+        },
+        {
+          "location_index": 13,
+          "query_lat": 20.7405788,
+          "query_lon": -103.4486292,
+          "nearest_node": 4321118556,
+          "distance": 0.0,
+          "search_time": 0.0006773471832275391
+        },
+        {
+          "location_index": 14,
+          "query_lat": 20.7355259,
+          "query_lon": -103.4582128,
+          "nearest_node": 1866808993,
+          "distance": 0.0,
+          "search_time": 0.00066375732421875
+        },
+        {
+          "location_index": 15,
+          "query_lat": 20.7398698,
+          "query_lon": -103.4644251,
+          "nearest_node": 1866809655,
+          "distance": 0.0,
+          "search_time": 0.0006821155548095703
+        },
+        {
+          "location_index": 16,
+          "query_lat": 20.737417,
+          "query_lon": -103.464676,
+          "nearest_node": 1866809329,
+          "distance": 0.0,
+          "search_time": 0.0007128715515136719
+        },
+        {
+          "location_index": 17,
+          "query_lat": 20.7391452,
+          "query_lon": -103.4644859,
+          "nearest_node": 1866809595,
+          "distance": 0.0,
+          "search_time": 0.0006995201110839844
+        },
+        {
+          "location_index": 18,
+          "query_lat": 20.7405494,
+          "query_lon": -103.4481177,
+          "nearest_node": 8297499196,
+          "distance": 0.0,
+          "search_time": 0.0015785694122314453
+        },
+        {
+          "location_index": 19,
+          "query_lat": 20.7358983,
+          "query_lon": -103.4595615,
+          "nearest_node": 1866809065,
+          "distance": 0.0,
+          "search_time": 0.0008323192596435547
+        }
+      ],
+      "avg_time": 0.00093536376953125,
+      "min_time": 0.00066375732421875,
+      "max_time": 0.0015785694122314453,
+      "total_time": 0.018707275390625
+    },
+    "speedup": 27.628169014084506,
+    "speedup_percentage": 2662.8169014084506
+  }
+}

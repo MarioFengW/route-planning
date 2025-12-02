@@ -60,13 +60,14 @@ class EmergencyService:
                 
                 nearest_node, distance, _ = self.kdtree.nearest_neighbor((x, y))
                 
+                # Convert numpy types to Python native types and handle NaN
                 hospital_data = {
-                    'id': i,
+                    'id': int(i),
                     'name': f'Hospital {i+1}',
-                    'lat': lat,
-                    'lon': lon,
+                    'lat': float(lat) if not np.isnan(lat) else 0.0,
+                    'lon': float(lon) if not np.isnan(lon) else 0.0,
                     'nearest_node': int(nearest_node),
-                    'distance_to_node': float(distance)
+                    'distance_to_node': float(distance) if not np.isnan(distance) else 0.0
                 }
                 
                 self.hospitals.append(hospital_data)
@@ -98,19 +99,28 @@ class EmergencyService:
                     
                     nearest_node, distance, _ = self.kdtree.nearest_neighbor((x, y))
                     
+                    # Get name safely
+                    name = feature.get('tags', {}).get('name', f'Hospital {i+1}')
+                    if not name or (isinstance(name, float) and np.isnan(name)):
+                        name = f'Hospital {i+1}'
+                    
+                    # Convert numpy types to Python native types and handle NaN
                     hospital_data = {
-                        'id': i,
-                        'name': feature['tags'].get('name', f'Hospital {i+1}'),
-                        'lat': lat,
-                        'lon': lon,
+                        'id': int(i),
+                        'name': str(name),
+                        'lat': float(lat) if not np.isnan(lat) else 0.0,
+                        'lon': float(lon) if not np.isnan(lon) else 0.0,
                         'nearest_node': int(nearest_node),
-                        'distance_to_node': float(distance)
+                        'distance_to_node': float(distance) if not np.isnan(distance) else 0.0
                     }
                     
                     self.hospitals.append(hospital_data)
         
         # Extract hospital nodes
         self.hospital_nodes = [h['nearest_node'] for h in self.hospitals]
+        
+        if not self.hospitals:
+            raise ValueError(f"No hospitals found within {search_distance}m. Try increasing the search distance or providing manual coordinates.")
         
         print(f"\nRegistered {len(self.hospitals)} hospitals")
         return self.hospitals
@@ -124,6 +134,9 @@ class EmergencyService:
         """
         if not self.hospitals:
             raise ValueError("No hospitals registered. Call find_and_register_hospitals first.")
+        
+        if len(self.hospitals) < 2:
+            raise ValueError("Need at least 2 hospitals to compute Voronoi partition.")
         
         print("Computing Voronoi partition...")
         

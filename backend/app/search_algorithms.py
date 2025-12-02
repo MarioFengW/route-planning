@@ -2,7 +2,7 @@
 Search algorithms implementation using SimpleAI
 Implements: BFS, DFS, UCS, IDDFS, and A*
 """
-from simpleai.search import SearchProblem, breadth_first, depth_first, uniform_cost, iterative_limited_depth_first, astar
+from simpleai.search import SearchProblem, breadth_first, depth_first, uniform_cost, limited_depth_first, astar
 from simpleai.search.models import SearchNode
 from typing import List, Tuple, Optional, Dict
 import time
@@ -299,9 +299,10 @@ class SearchAlgorithms:
             'search_time': time.time() - start_time
         }
     
-    def solve_iddfs(self, start_node: int, goal_node: int, max_depth: int = 50) -> Dict:
+    def solve_iddfs(self, start_node: int, goal_node: int, max_depth: int = 500) -> Dict:
         """
         Solve using Iterative Deepening Depth-First Search
+        Manually implements IDDFS by calling limited DFS with increasing depths
         
         Args:
             start_node: Starting node ID
@@ -313,36 +314,58 @@ class SearchAlgorithms:
         """
         start_time = time.time()
         
+        print(f"IDDFS: Solving from {start_node} to {goal_node} with max_depth={max_depth}")
+        
         problem = RoutePlanningProblem(self.graph, self.map_loader, start_node, goal_node)
         
-        try:
-            result = iterative_limited_depth_first(problem, graph_search=True, depth_limit=max_depth)
-            search_time = time.time() - start_time
-            
-            if result:
-                path = [node[1] for node in result.path()]
-                return {
-                    'algorithm': 'IDDFS',
-                    'success': True,
-                    'path': path,
-                    'path_length': len(path),
-                    'search_time': search_time,
-                    'nodes_expanded': problem.nodes_expanded,
-                    'cost': self._calculate_path_cost(path)
-                }
-        except Exception as e:
-            search_time = time.time() - start_time
-            return {
-                'algorithm': 'IDDFS',
-                'success': False,
-                'error': str(e),
-                'search_time': search_time
-            }
+        # Iterative deepening: try increasing depth limits
+        for depth in range(1, max_depth + 1):
+            try:
+                # Reset nodes expanded counter for each iteration
+                iteration_problem = RoutePlanningProblem(self.graph, self.map_loader, start_node, goal_node)
+                
+                # Try limited depth first search at this depth
+                result = limited_depth_first(iteration_problem, graph_search=True, depth_limit=depth)
+                
+                if result:
+                    path = [node[1] for node in result.path()]
+                    search_time = time.time() - start_time
+                    print(f"IDDFS: Found path with {len(path)} nodes at depth {depth}")
+                    return {
+                        'algorithm': 'IDDFS',
+                        'success': True,
+                        'path': path,
+                        'path_length': len(path),
+                        'search_time': search_time,
+                        'nodes_expanded': iteration_problem.nodes_expanded,
+                        'cost': self._calculate_path_cost(path),
+                        'depth_reached': depth
+                    }
+                    
+            except Exception as e:
+                # If error at this depth, continue to next depth
+                if "maximum recursion depth" in str(e).lower():
+                    print(f"IDDFS: Recursion limit at depth {depth}, trying next")
+                    continue
+                # For other errors, only fail if we've tried all depths
+                if depth == max_depth:
+                    search_time = time.time() - start_time
+                    print(f"IDDFS: Error at max depth {max_depth}: {str(e)}")
+                    return {
+                        'algorithm': 'IDDFS',
+                        'success': False,
+                        'error': str(e),
+                        'search_time': search_time
+                    }
         
+        # No solution found within depth limit
+        search_time = time.time() - start_time
+        print(f"IDDFS: No path found within depth limit of {max_depth}")
         return {
             'algorithm': 'IDDFS',
             'success': False,
-            'search_time': time.time() - start_time
+            'error': f'No path found within depth limit of {max_depth}',
+            'search_time': search_time
         }
     
     def solve_astar(self, start_node: int, goal_node: int, heuristic_type: str = 'haversine') -> Dict:

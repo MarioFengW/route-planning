@@ -47,6 +47,8 @@ export function useApi() {
 
   const getMapStats = () => request('/map/stats')
 
+  const getGraphData = () => request('/map/graph')
+
   // KD-Tree operations
   const buildKdTree = () => request('/kdtree/build', { method: 'POST' })
 
@@ -78,10 +80,16 @@ export function useApi() {
   })
 
   // Emergency service
-  const registerHospitals = (hospitals) => request('/emergency/register-hospitals', {
-    method: 'POST',
-    body: JSON.stringify({ hospitals }),
-  })
+  const registerHospitals = (hospitals, searchDistance = null) => {
+    const body = hospitals 
+      ? { hospitals } 
+      : { search_distance: searchDistance }
+    
+    return request('/emergency/register-hospitals', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    })
+  }
 
   const findNearestHospital = (lat, lon) => request('/emergency/nearest-hospital', {
     method: 'POST',
@@ -103,6 +111,7 @@ export function useApi() {
     // Map
     loadMap,
     getMapStats,
+    getGraphData,
     // KD-Tree
     buildKdTree,
     searchKdTree,

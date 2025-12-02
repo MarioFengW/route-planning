@@ -9,6 +9,7 @@ import os
 from typing import Tuple, List, Dict, Optional
 import geopy.distance
 import numpy as np
+from shapely.geometry import Point
 
 
 class MapLoader:
@@ -328,10 +329,60 @@ class MapLoader:
         center_node = nodes[len(nodes) // 2]
         center_lat, center_lon = self.get_node_latlon(center_node)
         
-        # Search for hospitals
-        tags = {'amenity': 'hospital'}
-        hospitals = self.get_features_near_location(center_lat, center_lon, tags, dist)
+        print(f"Searching for hospitals from center: ({center_lat}, {center_lon}), distance: {dist}m")
         
+        # Search for hospitals with multiple tag combinations
+        hospitals = []
+        
+        # Try different tag combinations
+        tag_combinations = [
+            {'amenity': 'hospital'},
+            {'amenity': 'clinic'},
+            {'healthcare': 'hospital'},
+            {'healthcare': 'clinic'}
+        ]
+        
+        for tags in tag_combinations:
+            try:
+                features = self.get_features_near_location(center_lat, center_lon, tags, dist)
+                if features:
+                    print(f"Found {len(features)} features with tags {tags}")
+                    hospitals.extend(features)
+            except Exception as e:
+                print(f"Error searching with tags {tags}: {e}")
+        
+        # If still no hospitals found, create synthetic hospitals from graph nodes
+        if not hospitals:
+            print("No hospitals found in OSM data. Creating synthetic hospital locations...")
+            hospitals = self._create_synthetic_hospitals()
+        
+        return hospitals
+    
+    def _create_synthetic_hospitals(self) -> List[Dict]:
+        """Create synthetic hospital locations from graph nodes"""
+        nodes = list(self.graph.nodes())
+        if not nodes:
+            return []
+        
+        # Select evenly distributed nodes as hospital locations
+        num_hospitals = min(5, len(nodes) // 100)  # 1 hospital per 100 nodes, max 5
+        if num_hospitals < 3:
+            num_hospitals = min(3, len(nodes))  # At least 3 hospitals if possible
+        
+        step = len(nodes) // num_hospitals if num_hospitals > 0 else 1
+        hospital_nodes = [nodes[i * step] for i in range(num_hospitals)]
+        
+        hospitals = []
+        for i, node_id in enumerate(hospital_nodes):
+            lat, lon = self.get_node_latlon(node_id)
+            # Create a point geometry
+            hospitals.append({
+                'osmid': f'synthetic_{i}',
+                'geometry': Point(lon, lat),
+                'tags': {'name': f'Hospital {i+1}', 'amenity': 'hospital', 'synthetic': True}
+            })
+        
+        print(f"Created {len(hospitals)} synthetic hospital locations")
         return hospitals
     
     def get_graph_stats(self) -> Dict:
