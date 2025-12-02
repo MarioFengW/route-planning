@@ -3,6 +3,7 @@ venv/
 env/
 ENV/
 .venv/
+cache/
 
 # Python
 __pycache__/
@@ -10,6 +11,7 @@ __pycache__/
 *$py.class
 *.so
 .Python
+.python-version
 
 # Flask
 instance/
@@ -29,3 +31,7 @@ instance/
 # OS
 .DS_Store
 Thumbs.db
+
+# Data
+*.png
+*.json

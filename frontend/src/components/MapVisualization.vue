@@ -79,7 +79,7 @@ const emit = defineEmits(['node-selected', 'nodes-selected'])
 
 const mapContainer = ref(null)
 const selectedNodes = ref([])
-const mapLayer = ref('satellite')
+const mapLayer = ref('streets') // Default to Streets view
 
 let map = null
 let baseLayer = null
