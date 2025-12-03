@@ -26,7 +26,7 @@ class MapLoader:
             os.makedirs(cache_dir)
     
     def load_map_from_address(self, address: str, dist: int = 10000, 
-                             network_type: str = 'drive', 
+                             network_type: str = 'all', 
                              use_cache: bool = True) -> nx.MultiDiGraph:
         """
         Load map from address using OSMnx
@@ -35,12 +35,13 @@ class MapLoader:
             address: Address to center the map
             dist: Distance in meters from the address
             network_type: Type of network ('drive', 'walk', 'bike', 'all')
+                         Default 'all' includes all types of roads including pedestrian paths
             use_cache: Whether to use cached graph if available
             
         Returns:
             NetworkX MultiDiGraph with the street network
         """
-        cache_file = os.path.join(self.cache_dir, f"graph_{hash(address)}_{dist}.pkl")
+        cache_file = os.path.join(self.cache_dir, f"graph_{hash(address)}_{dist}_{network_type}.pkl")
         
         # Try to load from cache
         if use_cache and os.path.exists(cache_file):
@@ -78,7 +79,7 @@ class MapLoader:
         
         return self.graph
     
-    def load_map_from_place(self, place_name: str, network_type: str = 'drive',
+    def load_map_from_place(self, place_name: str, network_type: str = 'all',
                            use_cache: bool = True) -> nx.MultiDiGraph:
         """
         Load map from place name using OSMnx
@@ -91,7 +92,7 @@ class MapLoader:
         Returns:
             NetworkX MultiDiGraph with the street network
         """
-        cache_file = os.path.join(self.cache_dir, f"graph_{hash(place_name)}.pkl")
+        cache_file = os.path.join(self.cache_dir, f"graph_{hash(place_name)}_{network_type}.pkl")
         
         # Try to load from cache
         if use_cache and os.path.exists(cache_file):
@@ -292,7 +293,18 @@ class MapLoader:
         """
         try:
             point = (lat, lon)
-            features = ox.features_from_point(point, tags=tags, dist=dist)
+            # Add timeout to prevent hanging
+            import socket
+            old_timeout = socket.getdefaulttimeout()
+            socket.setdefaulttimeout(10)  # 10 second timeout
+            
+            try:
+                features = ox.features_from_point(point, tags=tags, dist=dist)
+            finally:
+                socket.setdefaulttimeout(old_timeout)
+            
+            if features.empty:
+                return []
             
             results = []
             for idx, feature in features.iterrows():
@@ -305,7 +317,7 @@ class MapLoader:
             
             return results
         except Exception as e:
-            print(f"Error getting features: {e}")
+            # Silently fail - this is expected when no features are found
             return []
     
     def find_hospitals(self, dist: int = 5000) -> List[Dict]:
@@ -334,56 +346,47 @@ class MapLoader:
         # Search for hospitals with multiple tag combinations
         hospitals = []
         
-        # Try different tag combinations
+        # Try different tag combinations (limit attempts to avoid hanging)
         tag_combinations = [
             {'amenity': 'hospital'},
             {'amenity': 'clinic'},
             {'healthcare': 'hospital'},
-            {'healthcare': 'clinic'}
         ]
         
         for tags in tag_combinations:
             try:
+                print(f"  Trying tags: {tags}")
                 features = self.get_features_near_location(center_lat, center_lon, tags, dist)
                 if features:
-                    print(f"Found {len(features)} features with tags {tags}")
+                    print(f"  Found {len(features)} features with tags {tags}")
                     hospitals.extend(features)
+                    # If we found hospitals, we can stop searching
+                    if len(hospitals) >= 3:
+                        break
             except Exception as e:
-                print(f"Error searching with tags {tags}: {e}")
+                print(f"  No data for tags {tags}: {str(e)[:100]}")
+                continue
         
-        # If still no hospitals found, create synthetic hospitals from graph nodes
-        if not hospitals:
-            print("No hospitals found in OSM data. Creating synthetic hospital locations...")
-            hospitals = self._create_synthetic_hospitals()
+        # Remove duplicates based on location
+        unique_hospitals = []
+        seen_locations = set()
+        for hospital in hospitals:
+            geom = hospital.get('geometry')
+            if geom:
+                if hasattr(geom, 'centroid'):
+                    loc = (round(geom.centroid.y, 6), round(geom.centroid.x, 6))
+                else:
+                    loc = (round(geom.y, 6), round(geom.x, 6))
+                if loc not in seen_locations:
+                    seen_locations.add(loc)
+                    unique_hospitals.append(hospital)
         
-        return hospitals
-    
-    def _create_synthetic_hospitals(self) -> List[Dict]:
-        """Create synthetic hospital locations from graph nodes"""
-        nodes = list(self.graph.nodes())
-        if not nodes:
-            return []
+        if not unique_hospitals:
+            print("⚠️  No hospitals found in OpenStreetMap data within search radius")
+        else:
+            print(f"✓ Found {len(unique_hospitals)} unique hospitals")
         
-        # Select evenly distributed nodes as hospital locations
-        num_hospitals = min(5, len(nodes) // 100)  # 1 hospital per 100 nodes, max 5
-        if num_hospitals < 3:
-            num_hospitals = min(3, len(nodes))  # At least 3 hospitals if possible
-        
-        step = len(nodes) // num_hospitals if num_hospitals > 0 else 1
-        hospital_nodes = [nodes[i * step] for i in range(num_hospitals)]
-        
-        hospitals = []
-        for i, node_id in enumerate(hospital_nodes):
-            lat, lon = self.get_node_latlon(node_id)
-            # Create a point geometry
-            hospitals.append({
-                'osmid': f'synthetic_{i}',
-                'geometry': Point(lon, lat),
-                'tags': {'name': f'Hospital {i+1}', 'amenity': 'hospital', 'synthetic': True}
-            })
-        
-        print(f"Created {len(hospitals)} synthetic hospital locations")
-        return hospitals
+        return unique_hospitals
     
     def get_graph_stats(self) -> Dict:
         """Get statistics about the loaded graph"""

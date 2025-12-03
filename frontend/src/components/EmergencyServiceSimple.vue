@@ -1,65 +1,105 @@
 <template>
-  <div class="emergency-view space-y-4">
-    <!-- Header -->
-    <div class="flex items-center justify-between border-b border-gray-200 pb-4">
-      <div>
-        <h2 class="text-xl font-medium text-gray-900">Emergency Service with Voronoi</h2>
-        <p class="text-xs text-gray-500 mt-1">Automatic hospital detection and routing</p>
+  <div class="emergency-view space-y-6 max-w-7xl mx-auto">
+    <!-- Header with gradient - Azul oscuro y gris -->
+    <div class="bg-gradient-to-r from-slate-800 to-slate-900 rounded-xl shadow-lg p-6 text-white">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-4">
+          <div class="bg-white bg-opacity-10 rounded-full p-3">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+            </svg>
+          </div>
+          <div>
+            <h2 class="text-2xl font-bold flex items-center space-x-2">
+              <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              </svg>
+              <span>Sistema de Emergencias</span>
+            </h2>
+            <p class="text-slate-300 mt-1">Encuentra el hospital más cercano en tiempo real</p>
+          </div>
+        </div>
+        <button
+          @click="$emit('close')"
+          class="text-white hover:bg-white hover:bg-opacity-10 rounded-lg p-2 transition-all"
+          title="Cerrar"
+        >
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
       </div>
-      <button
-        @click="$emit('close')"
-        class="text-gray-500 hover:text-gray-700"
-      >
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-        </svg>
-      </button>
     </div>
 
-    <!-- Status Messages -->
-    <div v-if="error" class="bg-red-50 border-l-2 border-red-500 p-3">
-      <p class="text-sm text-red-700">{{ error }}</p>
-    </div>
+    <!-- Status Messages with animations -->
+    <transition name="slide-down">
+      <div v-if="error" class="bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg shadow-md">
+        <div class="flex items-center">
+          <svg class="w-5 h-5 text-red-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+          </svg>
+          <p class="text-sm text-red-800 font-medium">{{ error }}</p>
+        </div>
+      </div>
+    </transition>
 
-    <div v-if="successMessage" class="bg-royal-blue-50 border-l-2 border-royal-blue-600 p-3">
-      <p class="text-sm text-royal-blue-700">{{ successMessage }}</p>
-    </div>
+    <transition name="slide-down">
+      <div v-if="successMessage" class="bg-green-50 border-l-4 border-green-500 p-4 rounded-r-lg shadow-md">
+        <div class="flex items-center">
+          <svg class="w-5 h-5 text-green-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+          </svg>
+          <p class="text-sm text-green-800 font-medium">{{ successMessage }}</p>
+        </div>
+      </div>
+    </transition>
 
-    <!-- Tab Selection -->
-    <div class="flex border-b border-gray-200">
-      <button
-        @click="activeTab = 'hospitals'"
-        :class="[
-          'px-6 py-2.5 font-normal text-sm border-b-2 transition-colors',
-          activeTab === 'hospitals'
-            ? 'border-royal-blue-600 text-royal-blue-600'
-            : 'border-transparent text-gray-500 hover:text-gray-700'
-        ]"
-      >
-        Registered Hospitals
-      </button>
-      <button
-        @click="activeTab = 'voronoi'"
-        :class="[
-          'px-6 py-2.5 font-normal text-sm border-b-2 transition-colors',
-          activeTab === 'voronoi'
-            ? 'border-royal-blue-600 text-royal-blue-600'
-            : 'border-transparent text-gray-500 hover:text-gray-700'
-        ]"
-      >
-        Voronoi Diagram
-      </button>
-      <button
-        @click="activeTab = 'route'"
-        :class="[
-          'px-6 py-2.5 font-normal text-sm border-b-2 transition-colors',
-          activeTab === 'route'
-            ? 'border-royal-blue-600 text-royal-blue-600'
-            : 'border-transparent text-gray-500 hover:text-gray-700'
-        ]"
-      >
-        Find Route
-      </button>
+    <!-- Modern Tab Navigation with icons - Azul oscuro -->
+    <div class="bg-white rounded-xl shadow-md overflow-hidden">
+      <div class="flex border-b border-gray-200">
+        <button
+          @click="activeTab = 'route'"
+          :class="[
+            'flex-1 px-6 py-4 font-medium text-sm border-b-3 transition-all duration-200 flex items-center justify-center space-x-2',
+            activeTab === 'route'
+              ? 'border-blue-900 text-blue-900 bg-blue-50'
+              : 'border-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+          ]"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+          </svg>
+          <span>Ruta de Emergencia</span>
+        </button>
+        <button
+          @click="activeTab = 'hospitals'"
+          :class="[
+            'flex-1 px-6 py-4 font-medium text-sm border-b-3 transition-all duration-200 flex items-center justify-center space-x-2',
+            activeTab === 'hospitals'
+              ? 'border-blue-900 text-blue-900 bg-blue-50'
+              : 'border-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+          ]"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+          </svg>
+          <span>Hospitales</span>
+        </button>
+        <button
+          @click="activeTab = 'voronoi'"
+          :class="[
+            'flex-1 px-6 py-4 font-medium text-sm border-b-3 transition-all duration-200 flex items-center justify-center space-x-2',
+            activeTab === 'voronoi'
+              ? 'border-blue-900 text-blue-900 bg-blue-50'
+              : 'border-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+          ]"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+          </svg>
+          <span>Diagrama Voronoi</span>
+        </button>
+      </div>
     </div>
 
     <!-- Registered Hospitals Tab -->
@@ -77,7 +117,12 @@
           class="px-6 py-3 bg-royal-blue-600 text-white rounded-lg hover:bg-royal-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium mb-4"
         >
           <span v-if="loading">Loading...</span>
-          <span v-else>🔄 Refresh Hospital List</span>
+          <span v-else class="flex items-center space-x-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            <span>Refresh Hospital List</span>
+          </span>
         </button>
 
         <div v-if="registeredHospitals.length > 0" class="space-y-4">
@@ -116,6 +161,7 @@
             <MapVisualization 
               :graphData="graphData"
               :highlightedNodes="hospitalNodes"
+              :hospitalInfo="registeredHospitals"
               :selectionMode="false"
             />
           </div>
@@ -159,7 +205,11 @@
         <!-- Service Areas Info -->
         <div v-if="serviceAreasInfo" class="mt-6 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-4">
           <h4 class="font-semibold text-purple-900 mb-3">Service Areas Information</h4>
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+          <div class="grid gap-4 text-sm" :class="{
+            'grid-cols-2': (!serviceAreasInfo.avg_region_size || serviceAreasInfo.avg_region_size <= 0) && (!serviceAreasInfo.total_area || serviceAreasInfo.total_area <= 0),
+            'grid-cols-2 md:grid-cols-3': (serviceAreasInfo.avg_region_size && serviceAreasInfo.avg_region_size > 0) !== (serviceAreasInfo.total_area && serviceAreasInfo.total_area > 0),
+            'grid-cols-2 md:grid-cols-4': (serviceAreasInfo.avg_region_size && serviceAreasInfo.avg_region_size > 0) && (serviceAreasInfo.total_area && serviceAreasInfo.total_area > 0)
+          }">
             <div class="text-center">
               <div class="text-2xl font-bold text-purple-700">{{ serviceAreasInfo.num_hospitals }}</div>
               <div class="text-purple-600">Hospitals</div>
@@ -168,12 +218,12 @@
               <div class="text-2xl font-bold text-purple-700">{{ serviceAreasInfo.num_regions }}</div>
               <div class="text-purple-600">Regions</div>
             </div>
-            <div class="text-center">
-              <div class="text-2xl font-bold text-purple-700">{{ serviceAreasInfo.avg_region_size?.toFixed(0) || 'N/A' }}</div>
+            <div v-if="serviceAreasInfo.avg_region_size && serviceAreasInfo.avg_region_size > 0" class="text-center">
+              <div class="text-2xl font-bold text-purple-700">{{ serviceAreasInfo.avg_region_size.toFixed(0) }} m²</div>
               <div class="text-purple-600">Avg Region Size</div>
             </div>
-            <div class="text-center">
-              <div class="text-2xl font-bold text-purple-700">{{ serviceAreasInfo.total_area?.toFixed(0) || 'N/A' }}</div>
+            <div v-if="serviceAreasInfo.total_area && serviceAreasInfo.total_area > 0" class="text-center">
+              <div class="text-2xl font-bold text-purple-700">{{ (serviceAreasInfo.total_area / 1000000).toFixed(2) }} km²</div>
               <div class="text-purple-600">Total Area</div>
             </div>
           </div>
@@ -181,144 +231,299 @@
       </div>
     </div>
 
-    <!-- Find Route Tab -->
+    <!-- Find Route Tab - MAIN FEATURE -->
     <div v-if="activeTab === 'route'" class="space-y-6">
-      <!-- Location Input -->
-      <div class="bg-white border-2 border-gray-200 rounded-lg p-6">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">Emergency Location</h3>
-        <p class="text-sm text-gray-600 mb-4">
-          Click on the map or enter coordinates to set an emergency location. The system will automatically 
-          find the nearest hospital using Voronoi partitioning and calculate the optimal route.
-        </p>
-
-        <!-- Interactive Map Selection -->
-        <div class="mb-4">
-          <h4 class="font-semibold text-gray-900 mb-2">Select Location on Map</h4>
-          <p class="text-xs text-gray-600 mb-3">Click anywhere on the map to set emergency location</p>
-          <MapVisualization 
-            ref="mapViz"
-            :graphData="graphData"
-            :highlightedNodes="hospitalNodes"
-            :selectionMode="true"
-            :singleNodeMode="true"
-            @nodes-selected="handleLocationSelected"
-          />
+      <!-- Quick Start Guide -->
+      <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl p-6 shadow-md">
+        <div class="flex items-start space-x-4">
+          <div class="bg-blue-500 rounded-full p-3 text-white">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div class="flex-1">
+            <h3 class="text-lg font-bold text-blue-900 mb-2">¿Cómo usar el Sistema de Emergencias?</h3>
+            <ol class="text-sm text-blue-800 space-y-2 list-decimal list-inside">
+              <li><strong>Haz clic en cualquier nodo del mapa</strong> para establecer la ubicación de emergencia (hospitales en <svg class="w-3 h-3 inline text-red-600 fill-current" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8"/></svg> rojo)</li>
+              <li><strong>Selecciona el algoritmo</strong> de búsqueda que deseas usar (A* es el recomendado)</li>
+              <li><strong>Presiona "Encontrar Ruta"</strong> y el sistema calculará automáticamente la ruta al hospital más cercano</li>
+            </ol>
+          </div>
         </div>
+      </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Latitude</label>
-            <input
-              v-model.number="emergencyLat"
-              type="number"
-              step="0.000001"
-              placeholder="20.xxx"
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500"
-            />
+      <!-- Two Column Layout -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        <!-- LEFT COLUMN: Controls -->
+        <div class="space-y-6">
+          
+          <!-- Location Selection Card -->
+          <div class="bg-white border-2 border-gray-200 rounded-xl p-6 shadow-md hover:shadow-lg transition-shadow">
+            <div class="flex items-center space-x-3 mb-4">
+              <div class="bg-blue-100 rounded-lg p-2">
+                <svg class="w-6 h-6 text-blue-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </div>
+              <h3 class="text-lg font-bold text-gray-900">Paso 1: Ubicación de Emergencia</h3>
+            </div>
+
+            <!-- Selected Location Display -->
+            <div v-if="selectedNode" class="mb-4 p-4 bg-green-50 border-2 border-green-300 rounded-lg animate-pulse-slow">
+              <div class="flex items-center space-x-2 mb-2">
+                <svg class="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                </svg>
+                <h4 class="font-bold text-green-900">✓ Ubicación Seleccionada</h4>
+              </div>
+              <div class="text-sm text-green-800 space-y-1 ml-7">
+                <p><strong>Nodo:</strong> <span class="font-mono">{{ selectedNode.id }}</span></p>
+                <p><strong>Lat:</strong> {{ emergencyLat?.toFixed(6) }}</p>
+                <p><strong>Lon:</strong> {{ emergencyLon?.toFixed(6) }}</p>
+              </div>
+            </div>
+
+            <div v-else class="mb-4 p-4 bg-yellow-50 border-2 border-yellow-300 rounded-lg">
+              <div class="flex items-center space-x-2">
+                <svg class="w-5 h-5 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                </svg>
+                <p class="text-sm font-medium text-yellow-800">Haz clic en un nodo del mapa para continuar</p>
+              </div>
+            </div>
+
+            <!-- Map Selection -->
+            <div class="border-2 border-gray-300 rounded-lg overflow-hidden">
+              <MapVisualization 
+                ref="mapViz"
+                :graphData="graphData"
+                :highlightedNodes="hospitalNodes"
+                :hospitalInfo="registeredHospitals"
+                :selectionMode="true"
+                :singleNodeMode="true"
+                @nodes-selected="handleLocationSelected"
+              />
+            </div>
           </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Longitude</label>
-            <input
-              v-model.number="emergencyLon"
-              type="number"
-              step="0.000001"
-              placeholder="-103.xxx"
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500"
-            />
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Algorithm</label>
+
+          <!-- Algorithm Selection Card -->
+          <div class="bg-white border-2 border-gray-200 rounded-xl p-6 shadow-md hover:shadow-lg transition-shadow">
+            <div class="flex items-center space-x-3 mb-4">
+              <div class="bg-purple-100 rounded-lg p-2">
+                <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+                </svg>
+              </div>
+              <h3 class="text-lg font-bold text-gray-900">Paso 2: Algoritmo de Búsqueda</h3>
+            </div>
+            
+            <label class="block text-sm font-medium text-gray-700 mb-3">Selecciona el algoritmo a usar:</label>
             <select
               v-model="routeAlgorithm"
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500"
+              class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-900 focus:border-blue-900 text-gray-900 font-medium shadow-sm hover:border-gray-400 transition-all"
             >
-              <option value="astar">A* (Recommended)</option>
-              <option value="ucs">UCS</option>
-              <option value="bfs">BFS</option>
-              <option value="dfs">DFS</option>
-              <option value="iddfs">IDDFS</option>
+              <option value="astar">A* - Óptimo y Eficiente (Recomendado)</option>
+              <option value="ucs">UCS - Costo Uniforme</option>
+              <option value="bfs">BFS - Búsqueda en Anchura</option>
+              <option value="dfs">DFS - Búsqueda en Profundidad</option>
+              <option value="iddfs">IDDFS - Profundización Iterativa</option>
             </select>
+
+            <div class="mt-3 p-3 bg-blue-50 rounded-lg flex items-start space-x-2">
+              <svg class="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z"/>
+              </svg>
+              <p class="text-xs text-blue-800">
+                <strong>Tip:</strong> A* utiliza heurísticas para encontrar la ruta más corta de forma eficiente.
+              </p>
+            </div>
           </div>
+
+          <!-- Action Button -->
+          <button
+            @click="findEmergencyRoute"
+            :disabled="loading || !selectedNode"
+            :class="[
+              'w-full px-8 py-4 rounded-xl font-bold text-lg transition-all duration-200 shadow-lg',
+              selectedNode && !loading
+                ? 'bg-gradient-to-r from-blue-900 to-slate-800 hover:from-slate-800 hover:to-blue-900 text-white hover:shadow-xl transform hover:scale-105'
+                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+            ]"
+          >
+            <span v-if="loading" class="flex items-center justify-center space-x-2">
+              <svg class="animate-spin h-6 w-6" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <span>Buscando Ruta...</span>
+            </span>
+            <span v-else-if="!selectedNode" class="flex items-center justify-center space-x-2">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <span>Selecciona Ubicación Primero</span>
+            </span>
+            <span v-else class="flex items-center justify-center space-x-2">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              <span>ENCONTRAR RUTA AL HOSPITAL</span>
+            </span>
+          </button>
         </div>
 
-        <button
-          @click="findEmergencyRoute"
-          :disabled="loading || !emergencyLat || !emergencyLon"
-          class="w-full px-6 py-3 bg-royal-blue-600 text-white hover:bg-royal-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-normal text-base"
-        >
-          <span v-if="loading">Finding Route...</span>
-          <span v-else">🚨 Find Nearest Hospital Route</span>
-        </button>
+        <!-- RIGHT COLUMN: Results -->
+        <div class="space-y-6">
+          
+          <!-- Route Result -->
+          <div v-if="routeResult" class="bg-white border-2 border-gray-200 rounded-xl shadow-lg overflow-hidden">
+            <div class="bg-gradient-to-r from-green-500 to-green-600 px-6 py-4 text-white">
+              <h3 class="text-xl font-bold flex items-center space-x-2">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Resultado de la Ruta</span>
+              </h3>
+            </div>
+
+            <div v-if="routeResult.success" class="p-6 space-y-6">
+              <!-- Summary Cards -->
+              <div class="grid grid-cols-2 gap-4">
+                <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border-2 border-blue-200">
+                  <div class="flex items-center space-x-2 mb-2">
+                    <svg class="w-5 h-5 text-blue-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                    <div class="text-xs font-medium text-blue-900">Hospital Destino</div>
+                  </div>
+                  <div class="text-lg font-bold text-blue-900">Nodo {{ routeResult.nearest_hospital_id }}</div>
+                </div>
+
+                <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border-2 border-blue-200">
+                  <div class="flex items-center space-x-2 mb-2">
+                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                    </svg>
+                    <div class="text-xs font-medium text-blue-700">Distancia</div>
+                  </div>
+                  <div class="text-lg font-bold text-blue-900">{{ (routeResult.distance_to_hospital / 1000)?.toFixed(2) }} km</div>
+                </div>
+
+                <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 border-2 border-green-200">
+                  <div class="flex items-center space-x-2 mb-2">
+                    <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                    </svg>
+                    <div class="text-xs font-medium text-green-700">Nodos en Ruta</div>
+                  </div>
+                  <div class="text-lg font-bold text-green-900">{{ routeResult.path_length }}</div>
+                </div>
+
+                <div class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-4 border-2 border-purple-200">
+                  <div class="flex items-center space-x-2 mb-2">
+                    <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div class="text-xs font-medium text-purple-700">Tiempo Estimado</div>
+                  </div>
+                  <div class="text-lg font-bold text-purple-900">{{ routeResult.travel_time?.toFixed(1) || 'N/A' }} min</div>
+                </div>
+              </div>
+
+              <!-- Map with Route -->
+              <div class="border-2 border-gray-300 rounded-lg overflow-hidden">
+                <MapVisualization 
+                  :graphData="graphData"
+                  :highlightedNodes="[routeResult.start_node, routeResult.nearest_hospital_id]"
+                  :highlightedPath="routeResult.path"
+                  :hospitalInfo="registeredHospitals"
+                  :selectionMode="false"
+                />
+              </div>
+
+              <!-- Route Details -->
+              <div class="bg-gradient-to-r from-gray-50 to-gray-100 p-5 rounded-xl border-2 border-gray-200">
+                <h4 class="font-bold text-gray-900 mb-3 flex items-center space-x-2">
+                  <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>Detalles de la Ruta</span>
+                </h4>
+                <div class="text-sm text-gray-700 space-y-2">
+                  <div class="flex justify-between items-center p-2 bg-white rounded">
+                    <strong class="flex items-center space-x-2">
+                      <svg class="w-4 h-4 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
+                      </svg>
+                      <span>Ubicación de Emergencia:</span>
+                    </strong>
+                    <span class="font-mono text-xs">({{ emergencyLat?.toFixed(6) }}, {{ emergencyLon?.toFixed(6) }})</span>
+                  </div>
+                  <div class="flex justify-between items-center p-2 bg-white rounded">
+                    <strong class="flex items-center space-x-2">
+                      <svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                      </svg>
+                      <span>Nodo Inicio:</span>
+                    </strong>
+                    <span class="font-mono">{{ routeResult.start_node }}</span>
+                  </div>
+                  <div class="flex justify-between items-center p-2 bg-white rounded">
+                    <strong class="flex items-center space-x-2">
+                      <svg class="w-4 h-4 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z"/>
+                      </svg>
+                      <span>Hospital Destino:</span>
+                    </strong>
+                    <span class="font-mono">Nodo {{ routeResult.nearest_hospital_id }}</span>
+                  </div>
+                  <div class="flex justify-between items-center p-2 bg-white rounded">
+                    <strong class="flex items-center space-x-2">
+                      <svg class="w-4 h-4 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"/>
+                      </svg>
+                      <span>Algoritmo:</span>
+                    </strong>
+                    <span class="font-semibold">{{ routeAlgorithm.toUpperCase() }}</span>
+                  </div>
+                  <div class="flex justify-between items-center p-2 bg-white rounded">
+                    <strong class="flex items-center space-x-2">
+                      <svg class="w-4 h-4 text-orange-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+                      </svg>
+                      <span>Tiempo de Cálculo:</span>
+                    </strong>
+                    <span class="font-semibold">{{ (routeResult.time * 1000).toFixed(2) }} ms</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div v-else class="p-8">
+              <div class="text-center text-gray-600">
+                <svg class="w-20 h-20 mx-auto mb-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <p class="text-xl font-bold mb-2">No se encontró ruta</p>
+                <p class="text-sm text-gray-600">{{ routeResult.error || 'No se pudo encontrar una ruta al hospital más cercano' }}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Placeholder when no result yet -->
+          <div v-else class="bg-gradient-to-br from-gray-100 to-gray-200 border-2 border-dashed border-gray-400 rounded-xl p-12 text-center">
+            <svg class="w-24 h-24 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+            </svg>
+            <h4 class="text-lg font-semibold text-gray-600 mb-2">Resultado de la Ruta</h4>
+            <p class="text-sm text-gray-500">
+              Selecciona una ubicación y presiona el botón para ver la ruta
+            </p>
+          </div>
+        </div>
       </div>
-
-      <!-- Route Result -->
-      <div v-if="routeResult" class="bg-white border-2 border-gray-200 rounded-lg p-6">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">Emergency Route Result</h3>
-
-        <div v-if="routeResult.success" class="space-y-4">
-          <!-- Summary Cards -->
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div class="bg-red-50 rounded-lg p-3">
-              <div class="text-xs text-red-600 mb-1">Nearest Hospital</div>
-              <div class="text-sm font-semibold text-red-900">Hospital {{ routeResult.nearest_hospital_id }}</div>
-            </div>
-            <div class="bg-blue-50 rounded-lg p-3">
-              <div class="text-xs text-blue-600 mb-1">Distance</div>
-              <div class="text-sm font-semibold text-blue-900">{{ routeResult.distance_to_hospital?.toFixed(0) }} m</div>
-            </div>
-            <div class="bg-green-50 rounded-lg p-3">
-              <div class="text-xs text-green-600 mb-1">Path Length</div>
-              <div class="text-sm font-semibold text-green-900">{{ routeResult.path_length }} nodes</div>
-            </div>
-            <div class="bg-purple-50 rounded-lg p-3">
-              <div class="text-xs text-purple-600 mb-1">Travel Time</div>
-              <div class="text-sm font-semibold text-purple-900">{{ routeResult.travel_time?.toFixed(1) || 'N/A' }} min</div>
-            </div>
-          </div>
-
-          <!-- Map with Route -->
-          <div>
-            <h4 class="font-semibold text-gray-900 mb-3">Route Visualization</h4>
-            <MapVisualization 
-              :graphData="graphData"
-              :highlightedNodes="[routeResult.start_node, routeResult.nearest_hospital_id]"
-              :highlightedPath="routeResult.path"
-              :selectionMode="false"
-            />
-          </div>
-
-          <!-- Route Details -->
-          <div class="bg-gray-50 p-4 rounded">
-            <h4 class="font-semibold text-gray-900 mb-2">Route Details</h4>
-            <div class="text-sm text-gray-700 space-y-1">
-              <p><strong>Emergency Location:</strong> ({{ emergencyLat }}, {{ emergencyLon }})</p>
-              <p><strong>Start Node:</strong> {{ routeResult.start_node }}</p>
-              <p><strong>Destination Hospital:</strong> Node {{ routeResult.nearest_hospital_id }}</p>
-              <p><strong>Algorithm Used:</strong> {{ routeAlgorithm.toUpperCase() }}</p>
-              <p><strong>Computation Time:</strong> {{ (routeResult.time * 1000).toFixed(2) }} ms</p>
-            </div>
-          </div>
-        </div>
-
-        <div v-else class="text-center py-8 text-red-600">
-          <svg class="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-          </svg>
-          <p class="text-lg font-semibold">No route found</p>
-          <p class="text-sm mt-2">{{ routeResult.error || 'Unable to find a route to the nearest hospital' }}</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Instructions -->
-    <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded">
-      <h4 class="font-semibold text-red-900 mb-2">📝 How It Works</h4>
-      <ol class="text-sm text-red-800 space-y-1 list-decimal list-inside">
-        <li>Hospitals are automatically detected from OpenStreetMap when you load the map</li>
-        <li>The system creates a Voronoi diagram to partition service areas for each hospital</li>
-        <li>When you enter an emergency location, it uses Voronoi partitioning to instantly identify the nearest hospital</li>
-        <li>The optimal route is calculated using your chosen pathfinding algorithm</li>
-      </ol>
     </div>
   </div>
 </template>
@@ -344,7 +549,7 @@ const api = useApi()
 const loading = ref(false)
 const error = ref(null)
 const successMessage = ref(null)
-const activeTab = ref('hospitals')
+const activeTab = ref('route') // Start with route tab as main feature
 
 // Hospitals state
 const registeredHospitals = ref([])
@@ -354,6 +559,7 @@ const voronoiImageUrl = ref(null)
 const serviceAreasInfo = ref(null)
 
 // Route state
+const selectedNode = ref(null)
 const emergencyLat = ref(null)
 const emergencyLon = ref(null)
 const routeAlgorithm = ref('astar')
@@ -374,6 +580,8 @@ const loadHospitals = async () => {
     const result = await api.getServiceAreas()
     if (result.hospitals) {
       registeredHospitals.value = result.hospitals
+      console.log('Loaded hospitals:', result.hospitals)
+      console.log('Hospital nodes:', hospitalNodes.value)
       serviceAreasInfo.value = result
       successMessage.value = `Loaded ${result.hospitals.length} hospitals`
       setTimeout(() => {
@@ -411,12 +619,31 @@ const loadVoronoiDiagram = async () => {
 const handleLocationSelected = (nodes) => {
   if (nodes && nodes.length > 0) {
     const node = nodes[0]
+    selectedNode.value = node
     emergencyLat.value = node.lat
     emergencyLon.value = node.lon
+    // Clear previous route result when selecting new location
+    routeResult.value = null
+    // Clear map visualization by refreshing it
+    if (mapViz.value) {
+      mapViz.value.clearSelection()
+    }
+    successMessage.value = `Emergency location selected: Node ${node.id}`
+    setTimeout(() => {
+      successMessage.value = null
+    }, 2000)
   }
 }
 
 const findEmergencyRoute = async () => {
+  if (!emergencyLat.value || !emergencyLon.value) {
+    error.value = 'Please select a location on the map first'
+    setTimeout(() => {
+      error.value = null
+    }, 3000)
+    return
+  }
+
   loading.value = true
   error.value = null
   successMessage.value = null
@@ -426,10 +653,12 @@ const findEmergencyRoute = async () => {
     routeResult.value = result
 
     if (result.success) {
-      successMessage.value = `Route found to Hospital: ${result.distance_to_hospital?.toFixed(0)}m`
+      successMessage.value = `✓ Route found to nearest hospital: ${result.distance_to_hospital?.toFixed(0)}m away`
       setTimeout(() => {
         successMessage.value = null
       }, 5000)
+    } else {
+      error.value = result.error || 'No route found to nearest hospital'
     }
   } catch (err) {
     error.value = `Failed to find route: ${err.message}`
@@ -443,3 +672,85 @@ onMounted(() => {
   loadHospitals()
 })
 </script>
+
+<style scoped>
+/* Smooth transitions and animations */
+.slide-down-enter-active,
+.slide-down-leave-active {
+  transition: all 0.3s ease;
+}
+
+.slide-down-enter-from {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+.slide-down-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+/* Pulse animation for selected location */
+@keyframes pulse-slow {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Hover effects for cards */
+.hover\\:shadow-lg:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.hover\\:shadow-xl:hover {
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Custom border width for tabs */
+.border-b-3 {
+  border-bottom-width: 3px;
+}
+
+/* Gradient text */
+.text-gradient {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Smooth scroll behavior */
+.emergency-view {
+  scroll-behavior: smooth;
+}
+
+/* Loading spinner enhancement */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Focus ring for accessibility */
+*:focus-visible {
+  outline: 2px solid #1e3a8a;
+  outline-offset: 2px;
+}
+
+/* Button press effect */
+button:active {
+  transform: scale(0.98);
+}
+</style>
+

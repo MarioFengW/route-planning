@@ -5,6 +5,37 @@ Based on the spatial partitioning algorithm for k-dimensional points
 import numpy as np
 from typing import List, Tuple, Optional
 import time
+import math
+
+
+def haversine_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    """
+    Calculate the great circle distance between two points
+    on the earth (specified in decimal degrees) using Haversine formula
+    
+    Args:
+        lat1, lon1: First point coordinates
+        lat2, lon2: Second point coordinates
+        
+    Returns:
+        Distance in meters
+    """
+    # Convert decimal degrees to radians
+    lat1_rad = math.radians(lat1)
+    lon1_rad = math.radians(lon1)
+    lat2_rad = math.radians(lat2)
+    lon2_rad = math.radians(lon2)
+    
+    # Haversine formula
+    dlat = lat2_rad - lat1_rad
+    dlon = lon2_rad - lon1_rad
+    a = math.sin(dlat/2)**2 + math.cos(lat1_rad) * math.cos(lat2_rad) * math.sin(dlon/2)**2
+    c = 2 * math.asin(math.sqrt(a))
+    
+    # Radius of earth in meters
+    r = 6371000
+    
+    return c * r
 
 
 class KDNode:
@@ -100,12 +131,13 @@ class KDTree:
         
         return node
     
-    def nearest_neighbor(self, query_point: Tuple[float, float]) -> Tuple[int, float, float]:
+    def nearest_neighbor(self, query_point: Tuple[float, float], max_distance: float = None) -> Tuple[int, float, float]:
         """
         Find nearest neighbor to query point
         
         Args:
-            query_point: (x, y) coordinates to search from
+            query_point: (lon, lat) coordinates to search from
+            max_distance: Optional maximum distance in meters to search within
             
         Returns:
             Tuple of (node_id, distance_in_meters, search_time)
@@ -122,10 +154,22 @@ class KDTree:
         
         search_time = time.time() - start_time
         
-        # Convert distance from degrees to meters
-        # Approximate: 1 degree ≈ 111,000 meters at the equator
-        # Using Euclidean distance in lat/lon space, we convert to meters
-        distance_in_meters = best_distance * 111000  # Rough approximation
+        if best_node is None:
+            # No node found
+            return None, float('inf'), search_time
+        
+        # Calculate actual distance using Haversine formula
+        # query_point is (lon, lat), best_node.point is also (lon, lat)
+        distance_in_meters = haversine_distance(
+            query_point[1],  # query lat
+            query_point[0],  # query lon
+            best_node.point[1],  # node lat
+            best_node.point[0]   # node lon
+        )
+        
+        # If max_distance is specified and distance exceeds it, return None
+        if max_distance is not None and distance_in_meters > max_distance:
+            return None, distance_in_meters, search_time
         
         return best_node.node_id, distance_in_meters, search_time
     
@@ -185,20 +229,56 @@ class KDTree:
         Find k nearest neighbors to query point
         
         Args:
-            query_point: (x, y) coordinates to search from
+            query_point: (lon, lat) coordinates to search from
             k: Number of neighbors to find
             
         Returns:
-            List of tuples (node_id, distance) sorted by distance
+            List of tuples (node_id, distance_in_meters) sorted by distance
         """
         query = np.array(query_point)
         neighbors = []
         
         self._k_nearest_recursive(self.root, query, k, neighbors)
         
+        # Convert distances to meters using Haversine
+        neighbors_with_real_distance = []
+        for node_id, _ in neighbors:
+            # Find the node in the tree to get its coordinates
+            node = self._find_node_by_id(self.root, node_id)
+            if node:
+                distance = haversine_distance(
+                    query_point[1], query_point[0],
+                    node.point[1], node.point[0]
+                )
+                neighbors_with_real_distance.append((node_id, distance))
+        
         # Sort by distance and return top k
-        neighbors.sort(key=lambda x: x[1])
-        return neighbors[:k]
+        neighbors_with_real_distance.sort(key=lambda x: x[1])
+        return neighbors_with_real_distance[:k]
+    
+    def _find_node_by_id(self, node: Optional[KDNode], node_id: int) -> Optional[KDNode]:
+        """
+        Find a node in the tree by its node_id
+        
+        Args:
+            node: Current node in traversal
+            node_id: ID to search for
+            
+        Returns:
+            KDNode if found, None otherwise
+        """
+        if node is None:
+            return None
+        
+        if node.node_id == node_id:
+            return node
+        
+        # Search in both subtrees
+        left_result = self._find_node_by_id(node.left, node_id)
+        if left_result:
+            return left_result
+        
+        return self._find_node_by_id(node.right, node_id)
     
     def _k_nearest_recursive(self, node: Optional[KDNode], query: np.ndarray, 
                             k: int, neighbors: List[Tuple[int, float]]):
@@ -254,28 +334,31 @@ def exhaustive_search(points: List[Tuple[float, float]], node_ids: List[int],
     Exhaustive search for nearest neighbor (for comparison)
     
     Args:
-        points: List of all points
+        points: List of all points (lon, lat)
         node_ids: List of corresponding node IDs
-        query_point: Query point
+        query_point: Query point (lon, lat)
         
     Returns:
         Tuple of (node_id, distance_in_meters, search_time)
     """
     start_time = time.time()
     
-    query = np.array(query_point)
     min_distance = float('inf')
     nearest_id = None
     
+    query_lat = query_point[1]
+    query_lon = query_point[0]
+    
     for point, node_id in zip(points, node_ids):
-        distance = np.linalg.norm(np.array(point) - query)
+        # Calculate real distance using Haversine
+        distance = haversine_distance(
+            query_lat, query_lon,
+            point[1], point[0]  # point is (lon, lat)
+        )
         if distance < min_distance:
             min_distance = distance
             nearest_id = node_id
     
     search_time = time.time() - start_time
     
-    # Convert distance from degrees to meters
-    distance_in_meters = min_distance * 111000  # Rough approximation
-    
-    return nearest_id, distance_in_meters, search_time
+    return nearest_id, min_distance, search_time

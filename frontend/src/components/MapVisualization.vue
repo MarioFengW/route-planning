@@ -72,6 +72,14 @@ const props = defineProps({
   selectionMode: {
     type: Boolean,
     default: false
+  },
+  singleNodeMode: {
+    type: Boolean,
+    default: false
+  },
+  hospitalInfo: {
+    type: Array,
+    default: () => []
   }
 })
 
@@ -153,6 +161,16 @@ const visualizeGraph = () => {
   
   if (nodes.length === 0) return
   
+  // Debug: Log hospital info
+  if (props.hospitalInfo && props.hospitalInfo.length > 0) {
+    console.log('Hospital Info:', props.hospitalInfo)
+    console.log('Sample hospital node IDs:', props.hospitalInfo.map(h => ({
+      node_id: h.node_id,
+      nearest_node: h.nearest_node,
+      name: h.name
+    })))
+  }
+  
   // Draw edges (roads)
   edges.forEach(edge => {
     const source = nodes.find(n => n.id === edge.source)
@@ -172,12 +190,28 @@ const visualizeGraph = () => {
     const isHighlighted = props.highlightedNodes.includes(node.id)
     const isSelected = selectedNodes.value.some(n => n.id === node.id)
     
+    // Check if this node is a hospital (compare as strings and numbers)
+    const nodeIdStr = String(node.id)
+    const nodeIdNum = Number(node.id)
+    const hospitalData = props.hospitalInfo.find(h => {
+      const hospitalNodeId = h.node_id || h.nearest_node
+      return hospitalNodeId === node.id || 
+             hospitalNodeId === nodeIdStr || 
+             hospitalNodeId === nodeIdNum ||
+             String(hospitalNodeId) === nodeIdStr
+    })
+    
     let color = '#64748b'
     let radius = 3
     
     if (isSelected) {
       color = selectedNodes.value[0]?.id === node.id ? '#10b981' : '#ef4444'
       radius = 6
+    } else if (hospitalData) {
+      // Hospital nodes in red
+      console.log('Found hospital node:', node.id, hospitalData.name)
+      color = '#dc2626'
+      radius = 7
     } else if (isHighlighted) {
       color = '#f59e0b'
       radius = 5
@@ -187,9 +221,9 @@ const visualizeGraph = () => {
       radius: radius,
       fillColor: color,
       color: '#fff',
-      weight: 1,
+      weight: 2,
       opacity: 1,
-      fillOpacity: 0.8
+      fillOpacity: 0.9
     }).addTo(map)
     
     // Add click handler for selection
@@ -200,13 +234,24 @@ const visualizeGraph = () => {
     }
     
     // Add popup with node info
-    marker.bindPopup(`
-      <div style="color: #1e40af; font-size: 12px;">
-        <strong>Node:</strong> ${node.id}<br>
-        <strong>Lat:</strong> ${node.lat.toFixed(6)}<br>
-        <strong>Lon:</strong> ${node.lon.toFixed(6)}
-      </div>
-    `)
+    const popupContent = hospitalData 
+      ? `
+        <div style="color: #dc2626; font-size: 12px;">
+          <strong>🏥 ${hospitalData.name}</strong><br>
+          <strong>Node:</strong> ${node.id}<br>
+          <strong>Lat:</strong> ${node.lat.toFixed(6)}<br>
+          <strong>Lon:</strong> ${node.lon.toFixed(6)}
+        </div>
+      `
+      : `
+        <div style="color: #1e40af; font-size: 12px;">
+          <strong>Node:</strong> ${node.id}<br>
+          <strong>Lat:</strong> ${node.lat.toFixed(6)}<br>
+          <strong>Lon:</strong> ${node.lon.toFixed(6)}
+        </div>
+      `
+    
+    marker.bindPopup(popupContent)
     
     nodeMarkers.push(marker)
   })
@@ -248,15 +293,40 @@ const visualizeGraph = () => {
 const handleNodeSelect = (node) => {
   if (!props.selectionMode) return
   
-  if (selectedNodes.value.length >= 2) {
-    selectedNodes.value = []
+  // In single node mode, always replace the selection with the new node
+  if (props.singleNodeMode) {
+    selectedNodes.value = [node]
+    // Clear any existing path when selecting a new emergency location
+    if (pathPolyline) {
+      map.removeLayer(pathPolyline)
+      pathPolyline = null
+    }
+    emit('nodes-selected', [node])
+    visualizeGraph()
+    return
   }
   
-  selectedNodes.value.push(node)
+  // Normal mode: allow selecting 2 nodes for route planning
+  // Check if the node is already selected
+  const existingIndex = selectedNodes.value.findIndex(n => n.id === node.id)
   
-  if (selectedNodes.value.length === 1) {
-    emit('node-selected', node)
-  } else if (selectedNodes.value.length === 2) {
+  if (existingIndex >= 0) {
+    // If the node is already selected, remove it
+    selectedNodes.value.splice(existingIndex, 1)
+  } else {
+    // If we already have 2 nodes, reset and start fresh
+    if (selectedNodes.value.length >= 2) {
+      selectedNodes.value = [node]
+    } else {
+      // Add the new node
+      selectedNodes.value.push(node)
+    }
+  }
+  
+  // Emit the appropriate event
+  if (selectedNodes.value.length === 2) {
+    emit('nodes-selected', selectedNodes.value)
+  } else {
     emit('nodes-selected', selectedNodes.value)
   }
   
@@ -265,12 +335,23 @@ const handleNodeSelect = (node) => {
 
 const clearSelection = () => {
   selectedNodes.value = []
+  // Explicitly clear the path polyline
+  if (pathPolyline) {
+    map.removeLayer(pathPolyline)
+    pathPolyline = null
+  }
   visualizeGraph()
 }
 
 const refreshVisualization = () => {
   visualizeGraph()
 }
+
+// Expose methods to parent component
+defineExpose({
+  clearSelection,
+  refreshVisualization
+})
 
 // Lifecycle
 onMounted(() => {

@@ -100,10 +100,21 @@ class EmergencyService:
                     
                     nearest_node, distance, _ = self.kdtree.nearest_neighbor((x, y))
                     
-                    # Get name safely
-                    name = feature.get('tags', {}).get('name', f'Hospital {i+1}')
+                    # Get name from OSM tags
+                    tags = feature.get('tags', {})
+                    name = None
+                    
+                    # Try different name fields
+                    if 'name' in tags:
+                        name = tags.get('name')
+                    elif 'official_name' in tags:
+                        name = tags.get('official_name')
+                    elif 'alt_name' in tags:
+                        name = tags.get('alt_name')
+                    
+                    # If no name found or is NaN, use location-based name
                     if not name or (isinstance(name, float) and np.isnan(name)):
-                        name = f'Hospital {i+1}'
+                        name = f'Hospital en ({lat:.4f}, {lon:.4f})'
                     
                     # Convert numpy types to Python native types and handle NaN
                     hospital_data = {
@@ -116,6 +127,7 @@ class EmergencyService:
                     }
                     
                     self.hospitals.append(hospital_data)
+                    print(f"  {hospital_data['name']}: Node {nearest_node}")
         
         # Extract hospital nodes
         self.hospital_nodes = [h['nearest_node'] for h in self.hospitals]
@@ -131,13 +143,16 @@ class EmergencyService:
         Compute Voronoi partition for hospitals
         
         Returns:
-            Voronoi object
+            Voronoi object (or None if less than 2 hospitals)
         """
         if not self.hospitals:
             raise ValueError("No hospitals registered. Call find_and_register_hospitals first.")
         
         if len(self.hospitals) < 2:
-            raise ValueError("Need at least 2 hospitals to compute Voronoi partition.")
+            print(f"Warning: Only {len(self.hospitals)} hospital(s) registered. Voronoi partitioning requires at least 2 hospitals.")
+            print("Nearest hospital will be determined by direct distance calculation.")
+            self.voronoi = None
+            return None
         
         print("Computing Voronoi partition...")
         
@@ -207,6 +222,8 @@ class EmergencyService:
         Returns:
             Dictionary with route information
         """
+        import networkx as nx
+        
         # Find nearest hospital
         hospital_info = self.find_nearest_hospital(lat, lon)
         hospital = hospital_info['hospital']
@@ -222,6 +239,87 @@ class EmergencyService:
         start_node, _, _ = self.kdtree.nearest_neighbor((x, y))
         goal_node = hospital['nearest_node']
         
+        # Check if nodes are in the same connected component
+        # Convert to undirected for connectivity check
+        G_undirected = self.map_loader.graph.to_undirected()
+        
+        # Check if path exists
+        if not nx.has_path(G_undirected, start_node, goal_node):
+            print(f"Warning: No path exists between node {start_node} and node {goal_node}")
+            print(f"Graph may be disconnected. Attempting to find nodes in largest component...")
+            
+            # Get largest connected component
+            largest_cc = max(nx.connected_components(G_undirected), key=len)
+            print(f"Largest connected component has {len(largest_cc)} nodes")
+            
+            # Check if both nodes are in largest component
+            start_in_cc = start_node in largest_cc
+            goal_in_cc = goal_node in largest_cc
+            
+            if not start_in_cc or not goal_in_cc:
+                # Try to find alternative nodes in the largest component
+                if not start_in_cc:
+                    print(f"Start node {start_node} not in largest component, finding alternative...")
+                    # Find closest node in largest component
+                    min_dist = float('inf')
+                    alt_start = None
+                    for node in largest_cc:
+                        if node in self.map_loader.nodes_data:
+                            node_lat, node_lon = self.map_loader.get_node_latlon(node)
+                            dist = ((lat - node_lat)**2 + (lon - node_lon)**2)**0.5
+                            if dist < min_dist:
+                                min_dist = dist
+                                alt_start = node
+                    if alt_start:
+                        print(f"Using alternative start node: {alt_start}")
+                        start_node = alt_start
+                
+                if not goal_in_cc:
+                    print(f"Hospital node {goal_node} not in largest component, finding alternative hospital...")
+                    # Find alternative hospital in largest component
+                    min_dist = float('inf')
+                    alt_hospital = None
+                    alt_hospital_data = None
+                    
+                    for h in self.hospitals:
+                        h_node = h['nearest_node']
+                        if h_node in largest_cc:
+                            h_lat, h_lon = h['lat'], h['lon']
+                            dist = ((lat - h_lat)**2 + (lon - h_lon)**2)**0.5
+                            if dist < min_dist:
+                                min_dist = dist
+                                alt_hospital = h_node
+                                alt_hospital_data = h
+                    
+                    if alt_hospital:
+                        print(f"Using alternative hospital at node: {alt_hospital}")
+                        goal_node = alt_hospital
+                        hospital = alt_hospital_data
+                    else:
+                        return {
+                            'algorithm': algorithm,
+                            'success': False,
+                            'error': 'No hospitals found in the connected component containing the start location',
+                            'start_node': int(start_node),
+                            'nearest_hospital_id': int(goal_node),
+                            'distance_to_hospital': 0.0,
+                            'search_time': 0.0,
+                            'time': 0.0
+                        }
+                
+                # Verify path exists now
+                if not nx.has_path(G_undirected, start_node, goal_node):
+                    return {
+                        'algorithm': algorithm,
+                        'success': False,
+                        'error': 'No path found even after attempting to use largest connected component',
+                        'start_node': int(start_node),
+                        'nearest_hospital_id': int(goal_node),
+                        'distance_to_hospital': 0.0,
+                        'search_time': 0.0,
+                        'time': 0.0
+                    }
+        
         # Find route using specified algorithm
         print(f"Finding route from node {start_node} to hospital at node {goal_node} using {algorithm}...")
         
@@ -236,11 +334,45 @@ class EmergencyService:
         else:  # default to A*
             result = self.search_algorithms.solve_astar(start_node, goal_node, 'haversine')
         
+        # Check if route was found
+        if not result.get('success'):
+            print(f"Algorithm {algorithm} failed to find a route")
+            return {
+                'algorithm': algorithm,
+                'success': False,
+                'error': result.get('error', 'No route found by search algorithm'),
+                'start_node': int(start_node),
+                'nearest_hospital_id': int(goal_node),
+                'distance_to_hospital': 0.0,
+                'search_time': result.get('search_time', 0.0),
+                'time': result.get('search_time', 0.0),
+                'hospital': hospital,
+                'start_location': {'lat': float(lat), 'lon': float(lon)}
+            }
+        
         # Add location and hospital information
-        result['start_location'] = {'lat': lat, 'lon': lon}
+        result['start_location'] = {'lat': float(lat), 'lon': float(lon)}
         result['start_node'] = int(start_node)
         result['hospital'] = hospital
         result['voronoi_region'] = hospital_info['hospital_index']
+        
+        # Add frontend-expected fields
+        result['nearest_hospital_id'] = int(goal_node)
+        result['distance_to_hospital'] = float(result.get('cost', 0)) if result.get('success') else 0.0
+        
+        # Calculate travel time (assuming 50 km/h average speed in urban areas)
+        if result.get('success') and result.get('cost'):
+            # cost is in meters, convert to km and then to minutes
+            distance_km = result['cost'] / 1000
+            speed_kmh = 50
+            travel_time_minutes = (distance_km / speed_kmh) * 60
+            result['travel_time'] = float(travel_time_minutes)
+        else:
+            result['travel_time'] = 0.0
+        
+        # Rename 'search_time' to 'time' if needed for consistency
+        if 'search_time' in result and 'time' not in result:
+            result['time'] = result['search_time']
         
         return result
     
@@ -253,8 +385,69 @@ class EmergencyService:
             filename: Output filename for the plot
             show_map: Whether to show map nodes as background
         """
+        if not self.hospitals:
+            raise ValueError("No hospitals registered. Cannot visualize Voronoi diagram.")
+        
+        if len(self.hospitals) < 2:
+            # Special handling for single hospital - just show the hospital location
+            print(f"Only {len(self.hospitals)} hospital. Creating simple visualization...")
+            fig, ax = plt.subplots(figsize=(16, 14))
+            
+            # Get map bounds
+            coords, _ = self.map_loader.get_all_nodes_coords()
+            coords_array = np.array(coords)
+            min_lon, max_lon = coords_array[:, 0].min(), coords_array[:, 0].max()
+            min_lat, max_lat = coords_array[:, 1].min(), coords_array[:, 1].max()
+            
+            ax.set_xlim(min_lon, max_lon)
+            ax.set_ylim(min_lat, max_lat)
+            
+            # Add satellite basemap
+            try:
+                print("Adding satellite imagery basemap...")
+                ctx.add_basemap(
+                    ax,
+                    crs='EPSG:4326',
+                    source=ctx.providers.Esri.WorldImagery,
+                    attribution=False,
+                    alpha=0.7,
+                    zoom='auto'
+                )
+            except Exception as e:
+                print(f"Warning: Could not add basemap: {e}")
+            
+            # Plot hospital
+            h = self.hospitals[0]
+            ax.plot(h['lon'], h['lat'], 'r*', 
+                   markersize=40, markeredgewidth=3, markeredgecolor='white',
+                   label='Hospital', zorder=1000)
+            
+            ax.annotate(h['name'], (h['lon'], h['lat']), 
+                       xytext=(8, 8), textcoords='offset points',
+                       fontsize=10, fontweight='bold',
+                       color='white',
+                       bbox=dict(boxstyle='round,pad=0.5', facecolor='red', 
+                                edgecolor='white', linewidth=2, alpha=0.9),
+                       zorder=1001)
+            
+            ax.set_xlabel('Longitude', fontsize=12, fontweight='bold')
+            ax.set_ylabel('Latitude', fontsize=12, fontweight='bold')
+            ax.set_title('Hospital Location\n(Voronoi requires at least 2 hospitals)', 
+                        fontsize=14, fontweight='bold', pad=20)
+            ax.legend(loc='upper right', fontsize=11, framealpha=0.95)
+            
+            plt.tight_layout()
+            plt.savefig(filename, dpi=300, bbox_inches='tight', facecolor='white')
+            plt.close()
+            
+            print(f"Hospital visualization saved to {filename}")
+            return
+        
         if not self.voronoi:
             self.compute_voronoi_partition()
+        
+        if not self.voronoi:
+            raise ValueError("Failed to compute Voronoi partition.")
         
         print(f"Creating Voronoi visualization: {filename}")
         
@@ -351,6 +544,47 @@ class EmergencyService:
             'num_regions': len(self.voronoi.regions),
             'num_vertices': len(self.voronoi.vertices)
         }
+        
+        # Calculate region sizes and total area
+        try:
+            from scipy.spatial import ConvexHull
+            import numpy as np
+            
+            region_sizes = []
+            total_area = 0.0
+            
+            for region in self.voronoi.regions:
+                if not region or -1 in region:
+                    # Skip infinite or empty regions
+                    continue
+                
+                # Get vertices of this region
+                vertices = self.voronoi.vertices[region]
+                
+                if len(vertices) >= 3:
+                    # Calculate area using the shoelace formula
+                    try:
+                        hull = ConvexHull(vertices)
+                        area = hull.volume  # In 2D, volume is area
+                        region_sizes.append(area)
+                        total_area += area
+                    except Exception:
+                        # Skip regions that can't form a convex hull
+                        continue
+            
+            if region_sizes:
+                info['avg_region_size'] = sum(region_sizes) / len(region_sizes)
+                info['total_area'] = total_area
+                info['min_region_size'] = min(region_sizes)
+                info['max_region_size'] = max(region_sizes)
+            else:
+                info['avg_region_size'] = None
+                info['total_area'] = None
+                
+        except Exception as e:
+            print(f"Warning: Could not calculate region areas: {e}")
+            info['avg_region_size'] = None
+            info['total_area'] = None
         
         return info
     

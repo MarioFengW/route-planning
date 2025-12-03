@@ -90,13 +90,13 @@ def load_map():
         if 'address' in data:
             address = data['address']
             dist = data.get('dist', 10000)
-            network_type = data.get('network_type', 'drive')
+            network_type = data.get('network_type', 'all')  # Changed default to 'all'
             
             graph = map_loader.load_map_from_address(address, dist, network_type)
         elif 'place' in data:
             place = data['place']
             dist = data.get('dist', 10000)
-            network_type = data.get('network_type', 'drive')
+            network_type = data.get('network_type', 'all')  # Changed default to 'all'
             
             graph = map_loader.load_map_from_place(place, network_type)
         else:
@@ -106,22 +106,24 @@ def load_map():
         search_algorithms = SearchAlgorithms(graph, map_loader)
         emergency_service = EmergencyService(map_loader)
         
-        # Automatically search and register hospitals
+        # Automatically search and register hospitals with increased search radius
         print("Automatically searching for hospitals in the loaded map...")
-        print(f"Search distance: {dist} meters")
+        # Use a larger search radius for hospitals (minimum 5km)
+        hospital_search_dist = max(dist, 5000)
+        print(f"Hospital search distance: {hospital_search_dist} meters")
         hospitals_found = 0
         try:
-            hospitals = emergency_service.find_and_register_hospitals(search_distance=dist)
+            hospitals = emergency_service.find_and_register_hospitals(search_distance=hospital_search_dist)
             if hospitals and len(hospitals) > 0:
-                emergency_service.generate_voronoi_partition()
+                emergency_service.compute_voronoi_partition()
                 hospitals_found = len(hospitals)
                 print(f"Successfully registered {hospitals_found} hospitals")
             else:
-                print("No hospitals found in the area")
+                print("⚠️  No hospitals found in the area - Emergency service will be limited")
+                print(f"   You can manually register hospitals later or increase the search radius")
         except Exception as e:
-            print(f"Warning: Could not auto-register hospitals: {str(e)}")
-            import traceback
-            traceback.print_exc()
+            print(f"⚠️  Warning: Could not auto-register hospitals: {str(e)}")
+            print(f"   Emergency service will be available but without auto-detected hospitals")
             hospitals_found = 0
         
         stats = map_loader.get_graph_stats()
@@ -255,7 +257,19 @@ def search_kdtree():
         x, y = map_loader.latlon_to_xy(lat, lon)
         node_id, distance, search_time = kdtree.nearest_neighbor((x, y))
         
+        if node_id is None:
+            return jsonify({
+                "success": False,
+                "error": "No nodes found in the map area. The location may be outside the loaded map bounds.",
+                "search_time": float(search_time)
+            }), 404
+        
         node_latlon = map_loader.get_node_latlon(node_id)
+        
+        # Warn if distance is very large (> 500m)
+        warning = None
+        if distance > 500:
+            warning = f"Nearest node is {distance:.0f}m away. Consider loading a map with more detail or checking if the location is within the map area."
         
         return jsonify({
             "success": True,
@@ -263,7 +277,8 @@ def search_kdtree():
             "node_lat": node_latlon[0],
             "node_lon": node_latlon[1],
             "distance": float(distance),
-            "search_time": float(search_time)
+            "search_time": float(search_time),
+            "warning": warning
         })
     
     except Exception as e:
@@ -613,17 +628,20 @@ def emergency_route():
 @app.route('/api/emergency/voronoi', methods=['GET'])
 def get_voronoi_diagram():
     """Get Voronoi diagram visualization"""
-    if not emergency_service or not emergency_service.voronoi:
-        return jsonify({"error": "Voronoi not computed"}), 400
+    if not emergency_service or not emergency_service.hospitals:
+        return jsonify({"error": "No hospitals registered"}), 400
     
     try:
-        # Generate visualization
+        # Generate visualization (handles both voronoi and single hospital case)
         filename = 'voronoi_diagram.png'
         emergency_service.visualize_voronoi(filename)
         
         return send_file(filename, mimetype='image/png')
     
     except Exception as e:
+        print(f"Error generating Voronoi diagram: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
 @app.route('/api/emergency/service-areas', methods=['GET'])

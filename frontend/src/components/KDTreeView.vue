@@ -1,33 +1,64 @@
 <template>
-  <div class="kdtree-view space-y-4">
-    <!-- Header -->
-    <div class="flex items-center justify-between border-b border-gray-200 pb-4">
-      <div>
-        <h2 class="text-xl font-medium text-gray-900">KD-Tree Evaluation</h2>
-        <p class="text-xs text-gray-500 mt-1">Optimized vertex search in graph</p>
+  <div class="kdtree-view space-y-6 max-w-7xl mx-auto">
+    <!-- Header with gradient -->
+    <div class="bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl shadow-lg p-6 text-white">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-4">
+          <div class="bg-white bg-opacity-10 rounded-full p-3">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
+            </svg>
+          </div>
+          <div>
+            <h2 class="text-2xl font-bold">KD-Tree Evaluation</h2>
+            <p class="text-purple-100 mt-1">Optimized vertex search in graph</p>
+          </div>
+        </div>
+        <button
+          @click="$emit('close')"
+          class="text-white hover:bg-white hover:bg-opacity-10 rounded-lg p-2 transition-all"
+          title="Close"
+        >
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
       </div>
-      <button
-        @click="$emit('close')"
-        class="text-gray-500 hover:text-gray-700"
-      >
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-        </svg>
-      </button>
     </div>
 
-    <!-- Status Messages -->
-    <div v-if="error" class="bg-red-50 border-l-2 border-red-500 p-3">
-      <p class="text-sm text-red-700">{{ error }}</p>
-    </div>
+    <!-- Status Messages with animations -->
+    <transition name="slide-down">
+      <div v-if="error" class="bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg shadow-md">
+        <div class="flex items-center">
+          <svg class="w-5 h-5 text-red-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+          </svg>
+          <p class="text-sm text-red-800 font-medium">{{ error }}</p>
+        </div>
+      </div>
+    </transition>
 
-    <div v-if="successMessage" class="bg-royal-blue-50 border-l-2 border-royal-blue-600 p-3">
-      <p class="text-sm text-royal-blue-700">{{ successMessage }}</p>
-    </div>
+    <transition name="slide-down">
+      <div v-if="successMessage" class="bg-green-50 border-l-4 border-green-500 p-4 rounded-r-lg shadow-md">
+        <div class="flex items-center">
+          <svg class="w-5 h-5 text-green-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+          </svg>
+          <p class="text-sm text-green-800 font-medium">{{ successMessage }}</p>
+        </div>
+      </div>
+    </transition>
 
     <!-- Step 1: Build KD-Tree -->
-    <div class="bg-white border border-gray-200 p-5">
-      <h3 class="text-base font-medium text-gray-900 mb-3">Step 1: Build KD-Tree</h3>
+    <div class="bg-white border-2 border-gray-200 rounded-xl p-6 shadow-md hover:shadow-lg transition-shadow">
+      <div class="flex items-center space-x-3 mb-4">
+        <div class="bg-purple-100 rounded-lg p-2">
+          <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
+          </svg>
+        </div>
+        <h3 class="text-lg font-bold text-gray-900">Step 1: Build KD-Tree</h3>
+      </div>
       <p class="text-sm text-gray-600 mb-4">
         Construct a KD-Tree from all graph vertices for optimized spatial search.
       </p>
@@ -35,23 +66,50 @@
       <button
         @click="buildKDTree"
         :disabled="loading || kdTreeBuilt"
-        class="px-6 py-2.5 bg-royal-blue-600 text-white hover:bg-royal-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-normal"
+        :class="[
+          'px-8 py-4 rounded-xl font-bold text-lg transition-all duration-200 shadow-lg flex items-center justify-center space-x-2',
+          !loading && !kdTreeBuilt
+            ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-pink-600 hover:to-purple-600 text-white hover:shadow-xl transform hover:scale-105'
+            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+        ]"
       >
+        <svg v-if="loading" class="animate-spin h-6 w-6" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <svg v-else-if="kdTreeBuilt" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <svg v-else class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+        </svg>
         <span v-if="loading">Building KD-Tree...</span>
-        <span v-else-if="kdTreeBuilt">✓ KD-Tree Built</span>
+        <span v-else-if="kdTreeBuilt">KD-Tree Built Successfully</span>
         <span v-else>Build KD-Tree</span>
       </button>
 
-      <div v-if="buildTime !== null" class="mt-4 p-3 bg-royal-blue-50 border-l-2 border-royal-blue-600">
-        <p class="text-sm text-royal-blue-800">
-          <strong>Build Time:</strong> {{ buildTime?.toFixed(4) || '0.0000' }} seconds
-        </p>
+      <div v-if="buildTime !== null" class="mt-4 p-4 bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 rounded-lg">
+        <div class="flex items-center space-x-2">
+          <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <p class="text-sm text-purple-800 font-medium">
+            <strong>Build Time:</strong> {{ buildTime?.toFixed(4) || '0.0000' }} seconds
+          </p>
+        </div>
       </div>
     </div>
 
     <!-- Step 2: Run Evaluation -->
-    <div class="bg-white border border-gray-200 p-5">
-      <h3 class="text-base font-medium text-gray-900 mb-3">Step 2: Evaluate Performance</h3>
+    <div class="bg-white border-2 border-gray-200 rounded-xl p-6 shadow-md hover:shadow-lg transition-shadow">
+      <div class="flex items-center space-x-3 mb-4">
+        <div class="bg-blue-100 rounded-lg p-2">
+          <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+        </div>
+        <h3 class="text-lg font-bold text-gray-900">Step 2: Evaluate Performance</h3>
+      </div>
       <p class="text-sm text-gray-600 mb-4">
         Search for random locations within map bounds and compare KD-Tree vs exhaustive search performance.
       </p>
@@ -76,67 +134,94 @@
       <button
         @click="runEvaluation"
         :disabled="loading || !kdTreeBuilt"
-        class="px-6 py-2.5 bg-royal-blue-600 text-white hover:bg-royal-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-normal"
+        :class="[
+          'px-8 py-4 rounded-xl font-bold text-lg transition-all duration-200 shadow-lg flex items-center justify-center space-x-2',
+          !loading && kdTreeBuilt
+            ? 'bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-indigo-700 hover:to-blue-600 text-white hover:shadow-xl transform hover:scale-105'
+            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+        ]"
       >
+        <svg v-if="loading" class="animate-spin h-6 w-6" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <svg v-else class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+        </svg>
         <span v-if="loading">Running Evaluation...</span>
         <span v-else>Run Evaluation</span>
       </button>
 
-      <p v-if="!kdTreeBuilt" class="text-xs text-orange-600 mt-2">
-        ⚠️ Please build the KD-Tree first
+      <p v-if="!kdTreeBuilt" class="text-xs text-orange-600 mt-2 flex items-center">
+        <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+        </svg>
+        Please build the KD-Tree first
       </p>
     </div>
 
     <!-- Results -->
-    <div v-if="evaluationResults" class="bg-white border border-gray-200 p-5">
-      <h3 class="text-base font-medium text-gray-900 mb-4">Evaluation Results</h3>
+    <div v-if="evaluationResults" class="bg-white border-2 border-gray-200 rounded-xl p-6 shadow-lg">
+      <h3 class="text-xl font-bold text-gray-900 mb-6 flex items-center">
+        <svg class="w-6 h-6 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg>
+        Evaluation Results
+      </h3>
 
       <!-- Summary Statistics -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         <!-- KD-Tree Results -->
-        <div class="bg-royal-blue-50 border border-royal-blue-200 p-4">
-          <h4 class="font-medium text-royal-blue-900 mb-3">KD-Tree Search</h4>
+        <div class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6 border-2 border-purple-200">
+          <h4 class="font-bold text-purple-900 mb-4 flex items-center">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
+            </svg>
+            KD-Tree Search
+          </h4>
           <div class="space-y-2 text-sm">
-            <div class="flex justify-between">
-              <span class="text-royal-blue-700">Average Time:</span>
-              <strong class="text-royal-blue-900">{{ ((evaluationResults.kdtree_avg_time || 0) * 1000).toFixed(4) }} ms</strong>
+            <div class="flex justify-between p-2 bg-white bg-opacity-50 rounded">
+              <span class="text-purple-700 font-medium">Average Time:</span>
+              <strong class="text-purple-900">{{ ((evaluationResults.kdtree_avg_time || 0) * 1000).toFixed(4) }} ms</strong>
             </div>
-            <div class="flex justify-between">
-              <span class="text-royal-blue-700">Total Time:</span>
-              <strong class="text-royal-blue-900">{{ (evaluationResults.kdtree_total_time || 0).toFixed(4) }} s</strong>
+            <div class="flex justify-between p-2 bg-white bg-opacity-50 rounded">
+              <span class="text-purple-700 font-medium">Total Time:</span>
+              <strong class="text-purple-900">{{ (evaluationResults.kdtree_total_time || 0).toFixed(4) }} s</strong>
             </div>
-            <div class="flex justify-between">
-              <span class="text-blue-700">Min Time:</span>
-              <span class="text-blue-900">{{ ((evaluationResults.kdtree_min_time || 0) * 1000).toFixed(4) }} ms</span>
+            <div class="flex justify-between p-2 bg-white bg-opacity-30 rounded">
+              <span class="text-purple-600">Min Time:</span>
+              <span class="text-purple-900">{{ ((evaluationResults.kdtree_min_time || 0) * 1000).toFixed(4) }} ms</span>
             </div>
-            <div class="flex justify-between">
-              <span class="text-blue-700">Max Time:</span>
-              <span class="text-blue-900">{{ ((evaluationResults.kdtree_max_time || 0) * 1000).toFixed(4) }} ms</span>
+            <div class="flex justify-between p-2 bg-white bg-opacity-30 rounded">
+              <span class="text-purple-600">Max Time:</span>
+              <span class="text-purple-900">{{ ((evaluationResults.kdtree_max_time || 0) * 1000).toFixed(4) }} ms</span>
             </div>
           </div>
         </div>
 
         <!-- Exhaustive Search Results -->
-        <div class="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-4">
-          <h4 class="font-semibold text-orange-900 mb-3 flex items-center">
-            <span class="text-2xl mr-2">🔍</span>
+        <div class="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-6 border-2 border-orange-200">
+          <h4 class="font-bold text-orange-900 mb-4 flex items-center">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
             Exhaustive Search
           </h4>
           <div class="space-y-2 text-sm">
-            <div class="flex justify-between">
-              <span class="text-orange-700">Average Time:</span>
+            <div class="flex justify-between p-2 bg-white bg-opacity-50 rounded">
+              <span class="text-orange-700 font-medium">Average Time:</span>
               <strong class="text-orange-900">{{ ((evaluationResults.exhaustive_avg_time || 0) * 1000).toFixed(4) }} ms</strong>
             </div>
-            <div class="flex justify-between">
-              <span class="text-orange-700">Total Time:</span>
+            <div class="flex justify-between p-2 bg-white bg-opacity-50 rounded">
+              <span class="text-orange-700 font-medium">Total Time:</span>
               <strong class="text-orange-900">{{ (evaluationResults.exhaustive_total_time || 0).toFixed(4) }} s</strong>
             </div>
-            <div class="flex justify-between">
-              <span class="text-orange-700">Min Time:</span>
+            <div class="flex justify-between p-2 bg-white bg-opacity-30 rounded">
+              <span class="text-orange-600">Min Time:</span>
               <span class="text-orange-900">{{ ((evaluationResults.exhaustive_min_time || 0) * 1000).toFixed(4) }} ms</span>
             </div>
-            <div class="flex justify-between">
-              <span class="text-orange-700">Max Time:</span>
+            <div class="flex justify-between p-2 bg-white bg-opacity-30 rounded">
+              <span class="text-orange-600">Max Time:</span>
               <span class="text-orange-900">{{ ((evaluationResults.exhaustive_max_time || 0) * 1000).toFixed(4) }} ms</span>
             </div>
           </div>
@@ -144,8 +229,13 @@
       </div>
 
       <!-- Performance Comparison -->
-      <div class="bg-gradient-to-r from-green-50 to-emerald-100 rounded-lg p-4 mb-6">
-        <h4 class="font-semibold text-green-900 mb-3">⚡ Performance Improvement</h4>
+      <div class="bg-gradient-to-r from-green-50 to-emerald-100 rounded-xl p-6 mb-6 border-2 border-green-200">
+        <h4 class="font-bold text-green-900 mb-4 flex items-center justify-center">
+          <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+          Performance Improvement
+        </h4>
         <div class="text-center">
           <div class="text-4xl font-bold text-green-700 mb-2">
             {{ (evaluationResults.speedup_factor || 0).toFixed(2) }}x
@@ -222,9 +312,12 @@
       <div class="mt-6 flex justify-end">
         <button
           @click="exportResults"
-          class="px-4 py-2 border border-gray-300 text-gray-700 hover:bg-gray-50 text-sm font-normal"
+          class="px-4 py-2 border border-gray-300 text-gray-700 hover:bg-gray-50 text-sm font-normal flex items-center"
         >
-          📥 Export Results JSON
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          Export Results JSON
         </button>
       </div>
     </div>
@@ -334,3 +427,61 @@ const exportResults = () => {
   URL.revokeObjectURL(url)
 }
 </script>
+
+<style scoped>
+/* Smooth transitions and animations */
+.slide-down-enter-active,
+.slide-down-leave-active {
+  transition: all 0.3s ease;
+}
+
+.slide-down-enter-from {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+.slide-down-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+/* Custom border width for tabs */
+.border-b-3 {
+  border-bottom-width: 3px;
+}
+
+/* Hover effects for cards */
+.hover\:shadow-lg:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.hover\:shadow-xl:hover {
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Loading spinner enhancement */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Focus ring for accessibility */
+*:focus-visible {
+  outline: 2px solid #9333ea;
+  outline-offset: 2px;
+}
+
+/* Button press effect */
+button:active {
+  transform: scale(0.98);
+}
+
+.kdtree-view {
+  scroll-behavior: smooth;
+}
+</style>
