@@ -20,6 +20,7 @@ class MapLoader:
         self.cache_dir = cache_dir
         self.nodes_data = {}
         self.edges_data = {}
+        self.network_type = 'all'  # Track current network type
         
         # Create cache directory if it doesn't exist
         if not os.path.exists(cache_dir):
@@ -42,6 +43,9 @@ class MapLoader:
             NetworkX MultiDiGraph with the street network
         """
         cache_file = os.path.join(self.cache_dir, f"graph_{hash(address)}_{dist}_{network_type}.pkl")
+        
+        # Store network type
+        self.network_type = network_type
         
         # Try to load from cache
         if use_cache and os.path.exists(cache_file):
@@ -94,6 +98,9 @@ class MapLoader:
         """
         cache_file = os.path.join(self.cache_dir, f"graph_{hash(place_name)}_{network_type}.pkl")
         
+        # Store network type
+        self.network_type = network_type
+        
         # Try to load from cache
         if use_cache and os.path.exists(cache_file):
             print(f"Loading graph from cache: {cache_file}")
@@ -102,11 +109,9 @@ class MapLoader:
         else:
             print(f"Downloading graph from OSMnx for place: {place_name}")
             self.graph = ox.graph_from_place(
-                place_name,
+                place_name, 
                 network_type=network_type
-            )
-            
-            # Add speed and travel time information
+            )            # Add speed and travel time information
             try:
                 self.graph = ox.add_edge_speeds(self.graph)
                 self.graph = ox.add_edge_travel_times(self.graph)
@@ -322,26 +327,52 @@ class MapLoader:
     
     def find_hospitals(self, dist: int = 5000) -> List[Dict]:
         """
-        Find hospitals in the loaded map area
+        Find hospitals within the loaded map area only
         
         Args:
-            dist: Distance to search from map center
+            dist: Maximum distance from center (will be capped to map bounds)
             
         Returns:
-            List of hospital data
+            List of hospital data within the loaded map area
         """
         if not self.graph:
             return []
         
-        # Get center of the graph
+        # Get all nodes to determine the actual map bounds
         nodes = list(self.graph.nodes())
         if not nodes:
             return []
         
-        center_node = nodes[len(nodes) // 2]
-        center_lat, center_lon = self.get_node_latlon(center_node)
+        # Calculate the actual bounds of the loaded map
+        all_lats = [self.nodes_data[node]['lat'] for node in nodes if node in self.nodes_data]
+        all_lons = [self.nodes_data[node]['lon'] for node in nodes if node in self.nodes_data]
         
-        print(f"Searching for hospitals from center: ({center_lat}, {center_lon}), distance: {dist}m")
+        if not all_lats or not all_lons:
+            return []
+        
+        min_lat, max_lat = min(all_lats), max(all_lats)
+        min_lon, max_lon = min(all_lons), max(all_lons)
+        
+        # Calculate the center and actual radius of the loaded map
+        center_lat = (min_lat + max_lat) / 2
+        center_lon = (min_lon + max_lon) / 2
+        
+        # Calculate the maximum distance from center to corners of the bounding box
+        import geopy.distance
+        corner_distances = [
+            geopy.distance.distance((center_lat, center_lon), (min_lat, min_lon)).m,
+            geopy.distance.distance((center_lat, center_lon), (min_lat, max_lon)).m,
+            geopy.distance.distance((center_lat, center_lon), (max_lat, min_lon)).m,
+            geopy.distance.distance((center_lat, center_lon), (max_lat, max_lon)).m
+        ]
+        max_radius = max(corner_distances)
+        
+        # Use the smaller of the provided distance or the actual map radius
+        search_dist = min(dist, max_radius)
+        
+        print(f"Map bounds: lat [{min_lat:.6f}, {max_lat:.6f}], lon [{min_lon:.6f}, {max_lon:.6f}]")
+        print(f"Map center: ({center_lat:.6f}, {center_lon:.6f})")
+        print(f"Map radius: {max_radius:.0f}m, requested: {dist}m, using: {search_dist:.0f}m")
         
         # Search for hospitals with multiple tag combinations
         hospitals = []
@@ -356,7 +387,7 @@ class MapLoader:
         for tags in tag_combinations:
             try:
                 print(f"  Trying tags: {tags}")
-                features = self.get_features_near_location(center_lat, center_lon, tags, dist)
+                features = self.get_features_near_location(center_lat, center_lon, tags, search_dist)
                 if features:
                     print(f"  Found {len(features)} features with tags {tags}")
                     hospitals.extend(features)
@@ -367,10 +398,28 @@ class MapLoader:
                 print(f"  No data for tags {tags}: {str(e)[:100]}")
                 continue
         
+        # Filter hospitals to only include those within the actual loaded map bounds
+        filtered_hospitals = []
+        for hospital in hospitals:
+            geom = hospital.get('geometry')
+            if geom:
+                if hasattr(geom, 'centroid'):
+                    h_lat, h_lon = geom.centroid.y, geom.centroid.x
+                else:
+                    h_lat, h_lon = geom.y, geom.x
+                
+                # Check if hospital is within map bounds
+                if min_lat <= h_lat <= max_lat and min_lon <= h_lon <= max_lon:
+                    filtered_hospitals.append(hospital)
+                else:
+                    tags = hospital.get('tags', {})
+                    name = tags.get('name', 'Unknown')
+                    print(f"  Filtered out hospital '{name}' at ({h_lat:.6f}, {h_lon:.6f}) - outside map bounds")
+        
         # Remove duplicates based on location
         unique_hospitals = []
         seen_locations = set()
-        for hospital in hospitals:
+        for hospital in filtered_hospitals:
             geom = hospital.get('geometry')
             if geom:
                 if hasattr(geom, 'centroid'):
@@ -382,9 +431,9 @@ class MapLoader:
                     unique_hospitals.append(hospital)
         
         if not unique_hospitals:
-            print("⚠️  No hospitals found in OpenStreetMap data within search radius")
+            print("⚠️  No hospitals found in OpenStreetMap data within the loaded map area")
         else:
-            print(f"✓ Found {len(unique_hospitals)} unique hospitals")
+            print(f"✓ Found {len(unique_hospitals)} unique hospitals within map bounds")
         
         return unique_hospitals
     
@@ -397,5 +446,6 @@ class MapLoader:
             'num_nodes': self.graph.number_of_nodes(),
             'num_edges': self.graph.number_of_edges(),
             'is_directed': self.graph.is_directed(),
-            'is_multigraph': self.graph.is_multigraph()
+            'is_multigraph': self.graph.is_multigraph(),
+            'network_type': self.network_type
         }

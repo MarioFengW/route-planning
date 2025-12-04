@@ -1,7 +1,7 @@
 <template>
   <div class="route-planner-view space-y-6 max-w-7xl mx-auto">
     <!-- Header with gradient -->
-    <div class="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-xl shadow-lg p-6 text-white">
+    <div class="bg-gradient-to-r from-gray-600 to-gray-700 rounded-xl shadow-lg p-6 text-white">
       <div class="flex items-center justify-between">
         <div class="flex items-center space-x-4">
           <div class="bg-white bg-opacity-10 rounded-full p-3">
@@ -11,7 +11,7 @@
           </div>
           <div>
             <h2 class="text-2xl font-bold">Route Planning & Algorithm Comparison</h2>
-            <p class="text-blue-100 mt-1">Compare BFS, DFS, UCS, IDDFS, and A* algorithms</p>
+            <p class="text-gray-100 mt-1">Compare BFS, DFS, UCS, IDDFS, and A* algorithms</p>
           </div>
         </div>
         <button
@@ -57,7 +57,7 @@
           :class="[
             'flex-1 px-6 py-4 font-medium text-sm border-b-3 transition-all duration-200 flex items-center justify-center space-x-2',
             activeTab === 'single'
-              ? 'border-blue-600 text-blue-600 bg-blue-50'
+              ? 'border-gray-600 text-gray-600 bg-gray-50'
               : 'border-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900'
           ]"
         >
@@ -71,7 +71,7 @@
           :class="[
             'flex-1 px-6 py-4 font-medium text-sm border-b-3 transition-all duration-200 flex items-center justify-center space-x-2',
             activeTab === 'evaluation'
-              ? 'border-blue-600 text-blue-600 bg-blue-50'
+              ? 'border-gray-600 text-gray-600 bg-gray-50'
               : 'border-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900'
           ]"
         >
@@ -88,8 +88,8 @@
       <!-- Interactive Map for Node Selection -->
       <div class="bg-white border-2 border-gray-200 rounded-xl p-6 shadow-md hover:shadow-lg transition-shadow">
         <div class="flex items-center space-x-3 mb-4">
-          <div class="bg-blue-100 rounded-lg p-2">
-            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="bg-gray-100 rounded-lg p-2">
+            <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
@@ -98,8 +98,8 @@
         </div>
         <p class="text-sm text-gray-600 mb-4">
           Click on the map to select start (green) and goal (red) nodes. 
-          <span v-if="selectedNodes.length === 0" class="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">Select start node first</span>
-          <span v-else-if="selectedNodes.length === 1" class="inline-flex items-center px-2 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-medium">Now select goal node</span>
+          <span v-if="selectedNodes.length === 0" class="inline-flex items-center px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium">Select start node first</span>
+          <span v-else-if="selectedNodes.length === 1" class="inline-flex items-center px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium">Now select goal node</span>
           <span v-else class="inline-flex items-center px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">Both nodes selected!</span>
         </p>
 
@@ -115,8 +115,8 @@
       <!-- Algorithm Selection and Route Planning -->
       <div class="bg-white border-2 border-gray-200 rounded-xl p-6 shadow-md hover:shadow-lg transition-shadow">
         <div class="flex items-center space-x-3 mb-4">
-          <div class="bg-purple-100 rounded-lg p-2">
-            <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="bg-gray-100 rounded-lg p-2">
+            <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
             </svg>
           </div>
@@ -128,7 +128,7 @@
             <label class="block text-sm font-medium text-gray-700 mb-2">Algorithm</label>
             <select
               v-model="selectedAlgorithm"
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500"
             >
               <option value="bfs">BFS (Breadth-First Search)</option>
               <option value="dfs">DFS (Depth-First Search)</option>
@@ -163,7 +163,7 @@
           :class="[
             'w-full px-8 py-4 rounded-xl font-bold text-lg transition-all duration-200 shadow-lg flex items-center justify-center space-x-2',
             selectedNodes.length >= 2 && !loading
-              ? 'bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-indigo-700 hover:to-blue-600 text-white hover:shadow-xl transform hover:scale-105'
+              ? 'bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-600 text-white hover:shadow-xl transform hover:scale-105'
               : 'bg-gray-300 text-gray-500 cursor-not-allowed'
           ]"
         >
@@ -196,14 +196,14 @@
         <div class="p-6">
 
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-          <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border-2 border-blue-200">
+          <div class="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-4 border-2 border-gray-300">
             <div class="flex items-center space-x-2 mb-2">
-              <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
               </svg>
-              <div class="text-xs font-medium text-blue-600">Algorithm</div>
+              <div class="text-xs font-medium text-gray-600">Algorithm</div>
             </div>
-            <div class="text-lg font-bold text-blue-900 uppercase">{{ singleRouteResult.algorithm }}</div>
+            <div class="text-lg font-bold text-gray-900 uppercase">{{ singleRouteResult.algorithm }}</div>
           </div>
           <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 border-2 border-green-200">
             <div class="flex items-center space-x-2 mb-2">
@@ -214,14 +214,14 @@
             </div>
             <div class="text-lg font-bold text-green-900">{{ singleRouteResult.path_length || singleRouteResult.path?.length || 0 }} nodes</div>
           </div>
-          <div class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-4 border-2 border-purple-200">
+          <div class="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-4 border-2 border-gray-300">
             <div class="flex items-center space-x-2 mb-2">
-              <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+              <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
               </svg>
-              <div class="text-xs font-medium text-purple-600">Distance</div>
+              <div class="text-xs font-medium text-gray-600">Distance</div>
             </div>
-            <div class="text-lg font-bold text-purple-900">{{ (singleRouteResult.total_distance || singleRouteResult.cost)?.toFixed(0) || 'N/A' }} m</div>
+            <div class="text-lg font-bold text-gray-900">{{ (singleRouteResult.total_distance || singleRouteResult.cost)?.toFixed(0) || 'N/A' }} m</div>
           </div>
           <div class="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-4 border-2 border-orange-200">
             <div class="flex items-center space-x-2 mb-2">
@@ -251,8 +251,8 @@
       <!-- Evaluation Configuration -->
       <div class="bg-white border-2 border-gray-200 rounded-xl p-6 shadow-md hover:shadow-lg transition-shadow">
         <div class="flex items-center space-x-3 mb-4">
-          <div class="bg-indigo-100 rounded-lg p-2">
-            <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="bg-gray-100 rounded-lg p-2">
+            <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
@@ -272,7 +272,7 @@
             type="number"
             min="1"
             max="20"
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500"
           />
           <p class="text-xs text-gray-500 mt-1">
             Total routes to evaluate: {{ numPairsPerRange * 3 }} pairs × 5 algorithms = {{ numPairsPerRange * 15 }} routes
@@ -285,7 +285,7 @@
           :class="[
             'mt-4 w-full px-8 py-4 rounded-xl font-bold text-lg transition-all duration-200 shadow-lg flex items-center justify-center space-x-2',
             !loading
-              ? 'bg-gradient-to-r from-indigo-600 to-purple-700 hover:from-purple-700 hover:to-indigo-600 text-white hover:shadow-xl transform hover:scale-105'
+              ? 'bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-600 text-white hover:shadow-xl transform hover:scale-105'
               : 'bg-gray-300 text-gray-500 cursor-not-allowed'
           ]"
         >
@@ -401,7 +401,7 @@
             <label class="block text-sm font-medium text-gray-700 mb-2">Filter by Range</label>
             <select
               v-model="detailedFilterRange"
-              class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500"
             >
               <option value="all">All Ranges</option>
               <option value="short">Short Distance (&lt; 1km)</option>
@@ -428,7 +428,7 @@
                     <span :class="[
                       'px-2 py-1 rounded text-xs',
                       result.distance_range === 'short' ? 'bg-green-100 text-green-800' :
-                      result.distance_range === 'medium' ? 'bg-blue-100 text-blue-800' :
+                      result.distance_range === 'medium' ? 'bg-gray-100 text-gray-800' :
                       'bg-purple-100 text-purple-800'
                     ]">
                       {{ result.distance_range }}
@@ -471,14 +471,14 @@
     </div>
 
     <!-- Instructions -->
-    <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
-      <h4 class="font-semibold text-blue-900 mb-2 flex items-center">
+    <div class="bg-gray-50 border-l-4 border-gray-500 p-4 rounded">
+      <h4 class="font-semibold text-gray-900 mb-2 flex items-center">
         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
         </svg>
         Instructions
       </h4>
-      <div class="text-sm text-blue-800 space-y-2">
+      <div class="text-sm text-gray-800 space-y-2">
         <p><strong>Single Route:</strong> Select two nodes on the map, choose an algorithm, and find the optimal route.</p>
         <p><strong>Evaluation:</strong> Run a comprehensive comparison of all 5 algorithms across different distance ranges to determine the best algorithm for your use case.</p>
       </div>
@@ -652,7 +652,7 @@ const getRangeTitle = (range) => {
 
 const getAlgorithmColor = (alg) => {
   const colors = {
-    bfs: 'bg-blue-100 text-blue-800',
+    bfs: 'bg-gray-100 text-gray-800',
     dfs: 'bg-green-100 text-green-800',
     ucs: 'bg-purple-100 text-purple-800',
     iddfs: 'bg-orange-100 text-orange-800',
@@ -677,7 +677,7 @@ const getTimeColor = (range, alg) => {
   const time = rangeData[alg].avg_time
   
   if (time === minTime) return 'text-green-700'
-  if (time < minTime * 2) return 'text-blue-700'
+  if (time < minTime * 2) return 'text-gray-700'
   return 'text-orange-700'
 }
 </script>

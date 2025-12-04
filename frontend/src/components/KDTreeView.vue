@@ -1,7 +1,7 @@
 <template>
   <div class="kdtree-view space-y-6 max-w-7xl mx-auto">
     <!-- Header with gradient -->
-    <div class="bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl shadow-lg p-6 text-white">
+    <div class="bg-gradient-to-r from-gray-600 to-gray-700 rounded-xl shadow-lg p-6 text-white">
       <div class="flex items-center justify-between">
         <div class="flex items-center space-x-4">
           <div class="bg-white bg-opacity-10 rounded-full p-3">
@@ -11,7 +11,7 @@
           </div>
           <div>
             <h2 class="text-2xl font-bold">KD-Tree Evaluation</h2>
-            <p class="text-purple-100 mt-1">Optimized vertex search in graph</p>
+            <p class="text-gray-100 mt-1">Optimized vertex search in graph</p>
           </div>
         </div>
         <button
@@ -52,8 +52,8 @@
     <!-- Step 1: Build KD-Tree -->
     <div class="bg-white border-2 border-gray-200 rounded-xl p-6 shadow-md hover:shadow-lg transition-shadow">
       <div class="flex items-center space-x-3 mb-4">
-        <div class="bg-purple-100 rounded-lg p-2">
-          <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="bg-gray-100 rounded-lg p-2">
+          <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
           </svg>
         </div>
@@ -69,7 +69,7 @@
         :class="[
           'px-8 py-4 rounded-xl font-bold text-lg transition-all duration-200 shadow-lg flex items-center justify-center space-x-2',
           !loading && !kdTreeBuilt
-            ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-pink-600 hover:to-purple-600 text-white hover:shadow-xl transform hover:scale-105'
+            ? 'bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-600 text-white hover:shadow-xl transform hover:scale-105'
             : 'bg-gray-300 text-gray-500 cursor-not-allowed'
         ]"
       >
@@ -88,12 +88,12 @@
         <span v-else>Build KD-Tree</span>
       </button>
 
-      <div v-if="buildTime !== null" class="mt-4 p-4 bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 rounded-lg">
+      <div v-if="buildTime !== null" class="mt-4 p-4 bg-gradient-to-r from-gray-50 to-gray-100 border-2 border-gray-300 rounded-lg">
         <div class="flex items-center space-x-2">
-          <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          <p class="text-sm text-purple-800 font-medium">
+          <p class="text-sm text-gray-800 font-medium">
             <strong>Build Time:</strong> {{ buildTime?.toFixed(4) || '0.0000' }} seconds
           </p>
         </div>
@@ -103,8 +103,8 @@
     <!-- Step 2: Run Evaluation -->
     <div class="bg-white border-2 border-gray-200 rounded-xl p-6 shadow-md hover:shadow-lg transition-shadow">
       <div class="flex items-center space-x-3 mb-4">
-        <div class="bg-blue-100 rounded-lg p-2">
-          <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="bg-gray-100 rounded-lg p-2">
+          <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
           </svg>
         </div>
@@ -123,7 +123,7 @@
           type="number"
           min="1"
           max="100"
-          class="w-full px-4 py-2 border border-gray-300 focus:ring-1 focus:ring-royal-blue-500 focus:border-royal-blue-500"
+          class="w-full px-4 py-2 border border-gray-300 focus:ring-1 focus:ring-gray-500 focus:border-gray-500"
           placeholder="Enter number of locations (default: 20)"
         />
         <p class="text-xs text-gray-500 mt-1">
@@ -137,7 +137,7 @@
         :class="[
           'px-8 py-4 rounded-xl font-bold text-lg transition-all duration-200 shadow-lg flex items-center justify-center space-x-2',
           !loading && kdTreeBuilt
-            ? 'bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-indigo-700 hover:to-blue-600 text-white hover:shadow-xl transform hover:scale-105'
+            ? 'bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-600 text-white hover:shadow-xl transform hover:scale-105'
             : 'bg-gray-300 text-gray-500 cursor-not-allowed'
         ]"
       >
@@ -172,8 +172,8 @@
       <!-- Summary Statistics -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         <!-- KD-Tree Results -->
-        <div class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6 border-2 border-purple-200">
-          <h4 class="font-bold text-purple-900 mb-4 flex items-center">
+        <div class="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 border-2 border-gray-300">
+          <h4 class="font-bold text-gray-900 mb-4 flex items-center">
             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
             </svg>
@@ -181,20 +181,20 @@
           </h4>
           <div class="space-y-2 text-sm">
             <div class="flex justify-between p-2 bg-white bg-opacity-50 rounded">
-              <span class="text-purple-700 font-medium">Average Time:</span>
-              <strong class="text-purple-900">{{ ((evaluationResults.kdtree_avg_time || 0) * 1000).toFixed(4) }} ms</strong>
+              <span class="text-gray-700 font-medium">Average Time:</span>
+              <strong class="text-gray-900">{{ ((evaluationResults.kdtree_avg_time || 0) * 1000).toFixed(4) }} ms</strong>
             </div>
             <div class="flex justify-between p-2 bg-white bg-opacity-50 rounded">
-              <span class="text-purple-700 font-medium">Total Time:</span>
-              <strong class="text-purple-900">{{ (evaluationResults.kdtree_total_time || 0).toFixed(4) }} s</strong>
+              <span class="text-gray-700 font-medium">Total Time:</span>
+              <strong class="text-gray-900">{{ (evaluationResults.kdtree_total_time || 0).toFixed(4) }} s</strong>
             </div>
             <div class="flex justify-between p-2 bg-white bg-opacity-30 rounded">
-              <span class="text-purple-600">Min Time:</span>
-              <span class="text-purple-900">{{ ((evaluationResults.kdtree_min_time || 0) * 1000).toFixed(4) }} ms</span>
+              <span class="text-gray-600">Min Time:</span>
+              <span class="text-gray-900">{{ ((evaluationResults.kdtree_min_time || 0) * 1000).toFixed(4) }} ms</span>
             </div>
             <div class="flex justify-between p-2 bg-white bg-opacity-30 rounded">
-              <span class="text-purple-600">Max Time:</span>
-              <span class="text-purple-900">{{ ((evaluationResults.kdtree_max_time || 0) * 1000).toFixed(4) }} ms</span>
+              <span class="text-gray-600">Max Time:</span>
+              <span class="text-gray-900">{{ ((evaluationResults.kdtree_max_time || 0) * 1000).toFixed(4) }} ms</span>
             </div>
           </div>
         </div>
@@ -229,21 +229,21 @@
       </div>
 
       <!-- Performance Comparison -->
-      <div class="bg-gradient-to-r from-green-50 to-emerald-100 rounded-xl p-6 mb-6 border-2 border-green-200">
-        <h4 class="font-bold text-green-900 mb-4 flex items-center justify-center">
+      <div class="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-6 mb-6 border-2 border-gray-300">
+        <h4 class="font-bold text-gray-900 mb-4 flex items-center justify-center">
           <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
           </svg>
           Performance Improvement
         </h4>
         <div class="text-center">
-          <div class="text-4xl font-bold text-green-700 mb-2">
+          <div class="text-4xl font-bold text-gray-700 mb-2">
             {{ (evaluationResults.speedup_factor || 0).toFixed(2) }}x
           </div>
-          <p class="text-sm text-green-800">
+          <p class="text-sm text-gray-800">
             KD-Tree is {{ (evaluationResults.speedup_factor || 0).toFixed(2) }} times faster than exhaustive search
           </p>
-          <p class="text-xs text-green-700 mt-2">
+          <p class="text-xs text-gray-700 mt-2">
             ({{ ((1 - 1/(evaluationResults.speedup_factor || 1)) * 100).toFixed(1) }}% time reduction)
           </p>
         </div>
@@ -276,17 +276,17 @@
               <td class="px-3 py-2 whitespace-nowrap text-gray-700">
                 {{ (result.distance || 0).toFixed(2) }}
               </td>
-              <td class="px-3 py-2 whitespace-nowrap text-blue-700 font-semibold">
+              <td class="px-3 py-2 whitespace-nowrap text-gray-700 font-semibold">
                 {{ ((result.kdtree_time || 0) * 1000).toFixed(4) }}
               </td>
-              <td class="px-3 py-2 whitespace-nowrap text-orange-700 font-semibold">
+              <td class="px-3 py-2 whitespace-nowrap text-gray-700 font-semibold">
                 {{ ((result.exhaustive_time || 0) * 1000).toFixed(4) }}
               </td>
               <td class="px-3 py-2 whitespace-nowrap">
                 <span :class="[
                   'px-2 py-1 rounded text-xs font-semibold',
                   result.speedup > 10 ? 'bg-green-100 text-green-800' :
-                  result.speedup > 5 ? 'bg-blue-100 text-blue-800' :
+                  result.speedup > 5 ? 'bg-gray-100 text-gray-800' :
                   'bg-yellow-100 text-yellow-800'
                 ]">
                   {{ (result.speedup || 0).toFixed(1) }}x
@@ -323,9 +323,9 @@
     </div>
 
     <!-- Instructions -->
-    <div class="bg-royal-blue-50 border-l-2 border-royal-blue-600 p-4">
-      <h4 class="font-medium text-royal-blue-900 mb-2">Instructions</h4>
-      <ol class="text-sm text-blue-800 space-y-1 list-decimal list-inside">
+    <div class="bg-gray-50 border-l-2 border-gray-600 p-4">
+      <h4 class="font-medium text-gray-900 mb-2">Instructions</h4>
+      <ol class="text-sm text-gray-800 space-y-1 list-decimal list-inside">
         <li>Build the KD-Tree from all graph vertices</li>
         <li>Configure the number of random test locations (default: 20)</li>
         <li>Run evaluation to compare KD-Tree vs exhaustive search</li>

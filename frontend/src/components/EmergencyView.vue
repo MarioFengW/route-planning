@@ -21,8 +21,8 @@
       <p class="text-sm text-red-700">{{ error }}</p>
     </div>
 
-    <div v-if="successMessage" class="bg-royal-blue-50 border-l-2 border-royal-blue-600 p-3">
-      <p class="text-sm text-royal-blue-700">{{ successMessage }}</p>
+    <div v-if="successMessage" class="bg-gray-50 border-l-2 border-gray-600 p-3">
+      <p class="text-sm text-gray-700">{{ successMessage }}</p>
     </div>
 
     <!-- Tab Selection -->
@@ -32,7 +32,7 @@
         :class="[
           'px-6 py-2.5 font-normal text-sm border-b-2 transition-colors',
           activeTab === 'setup'
-            ? 'border-royal-blue-600 text-royal-blue-600'
+            ? 'border-gray-600 text-gray-600'
             : 'border-transparent text-gray-500 hover:text-gray-700'
         ]"
       >
@@ -43,7 +43,7 @@
         :class="[
           'px-6 py-2.5 font-normal text-sm border-b-2 transition-colors',
           activeTab === 'voronoi'
-            ? 'border-royal-blue-600 text-royal-blue-600'
+            ? 'border-gray-600 text-gray-600'
             : 'border-transparent text-gray-500 hover:text-gray-700'
         ]"
         :disabled="!hospitalsRegistered"
@@ -55,7 +55,7 @@
         :class="[
           'px-6 py-2.5 font-normal text-sm border-b-2 transition-colors',
           activeTab === 'route'
-            ? 'border-royal-blue-600 text-royal-blue-600'
+            ? 'border-gray-600 text-gray-600'
             : 'border-transparent text-gray-500 hover:text-gray-700'
         ]"
         :disabled="!hospitalsRegistered"
@@ -93,7 +93,9 @@
               @click="removeHospital(idx)"
               class="px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
             >
-              ✕
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
             </button>
           </div>
         </div>
@@ -101,14 +103,17 @@
         <div class="flex gap-3">
           <button
             @click="addHospital"
-            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"
+            class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 text-sm font-medium flex items-center space-x-1"
           >
-            + Add Hospital
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            <span>Add Hospital</span>
           </button>
           <button
             @click="registerManualHospitals"
             :disabled="loading || manualHospitals.length === 0"
-            class="px-6 py-2 bg-royal-blue-600 text-white hover:bg-royal-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-normal"
+            class="px-6 py-2 bg-gray-600 text-white hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed font-normal"
           >
             <span v-if="loading">Registering...</span>
             <span v-else>Register Hospitals</span>
@@ -116,7 +121,7 @@
         </div>
 
         <!-- Example coordinates -->
-        <div class="mt-4 p-3 bg-blue-50 rounded text-xs text-blue-800">
+        <div class="mt-4 p-3 bg-gray-50 rounded text-xs text-gray-800 border border-gray-300">
           <strong>Example coordinates for Guadalajara:</strong>
           <ul class="mt-1 space-y-1">
             <li>Hospital Civil: 20.6764, -103.3476</li>
@@ -156,14 +161,22 @@
           <span v-else>Auto Search Hospitals</span>
         </button>
 
-        <p class="text-xs text-orange-600 mt-2">
-          ⚠️ Note: Auto search may not find hospitals if none are tagged in OSM within the area
+        <p class=\"text-xs text-orange-600 mt-2 flex items-center\">
+          <svg class=\"w-4 h-4 mr-1\" fill=\"currentColor\" viewBox=\"0 0 20 20\">
+            <path fill-rule=\"evenodd\" d=\"M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z\" clip-rule=\"evenodd\" />
+          </svg>
+          Note: Auto search may not find hospitals if none are tagged in OSM within the area
         </p>
       </div>
 
       <!-- Registered Hospitals Display -->
       <div v-if="registeredHospitals.length > 0" class="bg-white border-2 border-green-200 rounded-lg p-6">
-        <h3 class="text-lg font-semibold text-green-900 mb-4">✓ Registered Hospitals ({{ registeredHospitals.length }})</h3>
+        <h3 class="text-lg font-semibold text-green-900 mb-4 flex items-center">
+          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          Registered Hospitals ({{ registeredHospitals.length }})
+        </h3>
         
         <div class="overflow-x-auto">
           <table class="min-w-full divide-y divide-gray-200 text-sm">
@@ -297,10 +310,17 @@
         <button
           @click="findEmergencyRoute"
           :disabled="loading || !emergencyLat || !emergencyLon"
-          class="mt-4 w-full px-6 py-3 bg-royal-blue-600 text-white hover:bg-royal-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-normal text-base"
+          class="mt-4 w-full px-6 py-3 bg-gray-600 text-white hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed font-normal text-base flex items-center justify-center space-x-2"
         >
+          <svg v-if="loading" class="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+          </svg>
           <span v-if="loading">Finding Route...</span>
-          <span v-else>🚨 Find Nearest Hospital Route</span>
+          <span v-else>Find Nearest Hospital Route</span>
         </button>
       </div>
 
@@ -315,9 +335,9 @@
               <div class="text-xs text-red-600 mb-1">Nearest Hospital</div>
               <div class="text-sm font-semibold text-red-900">{{ routeResult.nearest_hospital_id }}</div>
             </div>
-            <div class="bg-blue-50 rounded-lg p-3">
-              <div class="text-xs text-blue-600 mb-1">Distance</div>
-              <div class="text-sm font-semibold text-blue-900">{{ routeResult.distance_to_hospital.toFixed(0) }} m</div>
+            <div class="bg-gray-50 rounded-lg p-3">
+              <div class="text-xs text-gray-600 mb-1">Distance</div>
+              <div class="text-sm font-semibold text-gray-900">{{ routeResult.distance_to_hospital.toFixed(0) }} m</div>
             </div>
             <div class="bg-green-50 rounded-lg p-3">
               <div class="text-xs text-green-600 mb-1">Path Length</div>
@@ -365,7 +385,12 @@
 
     <!-- Instructions -->
     <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded">
-      <h4 class="font-semibold text-red-900 mb-2">📝 Instructions</h4>
+      <h4 class="font-semibold text-red-900 mb-2 flex items-center">
+        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        Instructions
+      </h4>
       <ol class="text-sm text-red-800 space-y-1 list-decimal list-inside">
         <li>Register hospitals manually or use auto-search to find them in OSM</li>
         <li>View the Voronoi diagram to see service area partitions</li>

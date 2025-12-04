@@ -1,12 +1,12 @@
 <template>
-  <div class="min-h-screen" style="background: linear-gradient(to bottom right, #f9fafb, #dbeafe);">
+  <div class="min-h-screen" style="background: linear-gradient(to bottom right, #f9fafb, #e5e7eb);">
     <!-- Header -->
-    <header style="background-color: #1e40af; border-bottom: 2px solid #1e3a8a;">
+    <header style="background-color: #4b5563; border-bottom: 2px solid #374151;">
       <div class="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between">
           <div>
             <h1 class="text-2xl font-light" style="color: #ffffff;">Route Planning System</h1>
-            <p class="text-xs mt-1" style="color: #bfdbfe;">KD-Tree · Search Algorithms · Emergency Services</p>
+            <p class="text-xs mt-1" style="color: #d1d5db;">KD-Tree · Search Algorithms · Emergency Services</p>
           </div>
           <div class="flex items-center space-x-4">
             <div class="flex items-center">
@@ -60,12 +60,12 @@
         <button
           @click="showComponent = 'kdtree'"
           class="bg-white p-5 text-left transition-all group"
-          style="border: 3px solid #3b82f6;"
-          @mouseenter="$event.currentTarget.style.borderColor='#2563eb'; $event.currentTarget.style.backgroundColor='#eff6ff'"
-          @mouseleave="$event.currentTarget.style.borderColor='#3b82f6'; $event.currentTarget.style.backgroundColor='#ffffff'"
+          style="border: 3px solid #6b7280;"
+          @mouseenter="$event.currentTarget.style.borderColor='#4b5563'; $event.currentTarget.style.backgroundColor='#f3f4f6'"
+          @mouseleave="$event.currentTarget.style.borderColor='#6b7280'; $event.currentTarget.style.backgroundColor='#ffffff'"
         >
-          <h2 class="text-lg font-medium mb-1" style="color: #1e40af;">KD-Tree</h2>
-          <p class="text-xs mb-3" style="color: #3b82f6;">Spatial Search Optimization</p>
+          <h2 class="text-lg font-medium mb-1" style="color: #374151;">KD-Tree</h2>
+          <p class="text-xs mb-3" style="color: #6b7280;">Spatial Search Optimization</p>
           <p class="text-sm text-gray-600 leading-relaxed">
             Optimized nearest neighbor search using KD-Tree data structure
           </p>
@@ -75,12 +75,12 @@
         <button
           @click="showComponent = 'routes'"
           class="bg-white p-5 text-left transition-all group"
-          style="border: 3px solid #3b82f6;"
-          @mouseenter="$event.currentTarget.style.borderColor='#2563eb'; $event.currentTarget.style.backgroundColor='#eff6ff'"
-          @mouseleave="$event.currentTarget.style.borderColor='#3b82f6'; $event.currentTarget.style.backgroundColor='#ffffff'"
+          style="border: 3px solid #6b7280;"
+          @mouseenter="$event.currentTarget.style.borderColor='#4b5563'; $event.currentTarget.style.backgroundColor='#f3f4f6'"
+          @mouseleave="$event.currentTarget.style.borderColor='#6b7280'; $event.currentTarget.style.backgroundColor='#ffffff'"
         >
-          <h2 class="text-lg font-medium mb-1" style="color: #1e40af;">Route Planner</h2>
-          <p class="text-xs mb-3" style="color: #3b82f6;">Algorithm Comparison</p>
+          <h2 class="text-lg font-medium mb-1" style="color: #374151;">Route Planner</h2>
+          <p class="text-xs mb-3" style="color: #6b7280;">Algorithm Comparison</p>
           <p class="text-sm text-gray-600 leading-relaxed">
             Compare BFS, DFS, UCS, IDDFS, and A* algorithms for route planning
           </p>
@@ -90,12 +90,12 @@
         <button
           @click="showComponent = 'emergency'"
           class="bg-white p-5 text-left transition-all group"
-          style="border: 3px solid #3b82f6;"
-          @mouseenter="$event.currentTarget.style.borderColor='#2563eb'; $event.currentTarget.style.backgroundColor='#eff6ff'"
-          @mouseleave="$event.currentTarget.style.borderColor='#3b82f6'; $event.currentTarget.style.backgroundColor='#ffffff'"
+          style="border: 3px solid #6b7280;"
+          @mouseenter="$event.currentTarget.style.borderColor='#4b5563'; $event.currentTarget.style.backgroundColor='#f3f4f6'"
+          @mouseleave="$event.currentTarget.style.borderColor='#6b7280'; $event.currentTarget.style.backgroundColor='#ffffff'"
         >
-          <h2 class="text-lg font-medium mb-1" style="color: #1e40af;">Emergency Service</h2>
-          <p class="text-xs mb-3" style="color: #3b82f6;">Hospital Routing</p>
+          <h2 class="text-lg font-medium mb-1" style="color: #374151;">Emergency Service</h2>
+          <p class="text-xs mb-3" style="color: #6b7280;">Hospital Routing</p>
           <p class="text-sm text-gray-600 leading-relaxed">
             Find nearest hospital using Voronoi partitioning and optimal routing
           </p>
@@ -103,8 +103,8 @@
       </div>
 
       <!-- Map Setup Section -->
-      <div class="bg-white p-6 mb-6" style="border: 3px solid #3b82f6;">
-        <h2 class="text-lg font-medium mb-4" style="color: #1e40af;">Map Setup</h2>
+      <div class="bg-white p-6 mb-6" style="border: 3px solid #6b7280;">
+        <h2 class="text-lg font-medium mb-4" style="color: #374151;">Map Setup</h2>
         
         <div v-if="!mapLoaded" class="space-y-4">
           <div>
@@ -115,7 +115,7 @@
               v-model="mapAddress"
               type="text"
               placeholder="e.g., Tec de Monterrey campus Guadalajara, Zapopan, Jalisco, México"
-              class="w-full px-4 py-2 border-2 border-royal-blue-200 focus:ring-2 focus:ring-royal-blue-500 focus:border-royal-blue-500"
+              class="w-full px-4 py-2 border-2 border-gray-200 focus:ring-2 focus:ring-gray-500 focus:border-gray-500"
             />
           </div>
 
@@ -128,7 +128,7 @@
                 v-model.number="mapDistance"
                 type="number"
                 placeholder="10000"
-                class="w-full px-4 py-2 border-2 border-royal-blue-200 focus:ring-2 focus:ring-royal-blue-500 focus:border-royal-blue-500"
+                class="w-full px-4 py-2 border-2 border-gray-200 focus:ring-2 focus:ring-gray-500 focus:border-gray-500"
               />
             </div>
 
@@ -138,7 +138,7 @@
               </label>
               <select
                 v-model="networkType"
-                class="w-full px-4 py-2 border-2 border-royal-blue-200 focus:ring-2 focus:ring-royal-blue-500 focus:border-royal-blue-500"
+                class="w-full px-4 py-2 border-2 border-gray-200 focus:ring-2 focus:ring-gray-500 focus:border-gray-500"
               >
                 <option value="drive">Drive</option>
                 <option value="walk">Walk</option>
@@ -152,7 +152,7 @@
             @click="loadMap"
             :disabled="loading || !mapAddress"
             class="w-full px-6 py-2.5 transition-colors font-normal disabled:opacity-50 disabled:cursor-not-allowed"
-            style="background-color: #2563eb; color: #ffffff;"
+            style="background-color: #4b5563; color: #ffffff;"
             @mouseenter="handleButtonHover($event, true)"
             @mouseleave="handleButtonHover($event, false)"
           >
@@ -162,17 +162,22 @@
         </div>
 
         <div v-else class="space-y-4">
-          <div class="p-4" style="background-color: #eff6ff; border-left: 4px solid #2563eb;">
-            <h3 class="font-semibold mb-2" style="color: #1e40af;">✓ Map Loaded</h3>
-            <div class="text-sm space-y-1" style="color: #1e40af;">
-              <p><strong style="color: #1e3a8a;">Nodes:</strong> {{ mapStats.num_nodes?.toLocaleString() }}</p>
-              <p><strong style="color: #1e3a8a;">Edges:</strong> {{ mapStats.num_edges?.toLocaleString() }}</p>
+          <div class="p-4" style="background-color: #f3f4f6; border-left: 4px solid #4b5563;">
+            <h3 class="font-semibold mb-2 flex items-center" style="color: #374151;">
+              <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Map Loaded
+            </h3>
+            <div class="text-sm space-y-1" style="color: #374151;">
+              <p><strong style="color: #1f2937;">Nodes:</strong> {{ mapStats.num_nodes?.toLocaleString() }}</p>
+              <p><strong style="color: #1f2937;">Edges:</strong> {{ mapStats.num_edges?.toLocaleString() }}</p>
             </div>
           </div>
 
           <!-- Map Visualization -->
-          <div class="bg-gradient-to-br from-royal-blue-50 to-gray-50 p-4 border border-royal-blue-200">
-            <h3 class="font-medium text-royal-blue-800 mb-3">Map Visualization</h3>
+          <div class="bg-gradient-to-br from-gray-50 to-gray-100 p-4 border border-gray-300">
+            <h3 class="font-medium text-gray-800 mb-3">Map Visualization</h3>
             <MapVisualization 
               :graphData="graphData"
               :selectionMode="false"
@@ -189,7 +194,7 @@
       </div>
 
       <!-- Active Component Display -->
-      <div v-if="showComponent && mapLoaded" class="bg-white border-2 border-royal-blue-300 p-6 shadow-lg shadow-royal-blue-100">
+      <div v-if="showComponent && mapLoaded" class="bg-white border-2 border-gray-300 p-6 shadow-lg shadow-gray-200">
         <!-- KD-Tree Component -->
         <KDTreeView
           v-if="showComponent === 'kdtree'"
@@ -213,19 +218,19 @@
       </div>
 
       <!-- Quick Start Guide -->
-      <div class="bg-white border-2 border-royal-blue-200 p-6 mt-6">
-        <h2 class="text-lg font-medium text-royal-blue-700 mb-4">Quick Start</h2>
+      <div class="bg-white border-2 border-gray-300 p-6 mt-6">
+        <h2 class="text-lg font-medium text-gray-700 mb-4">Quick Start</h2>
         <div class="space-y-2 text-sm text-gray-600">
           <div class="flex items-start">
-            <span class="font-medium text-royal-blue-600 mr-2 min-w-[20px]">1.</span>
+            <span class="font-medium text-gray-600 mr-2 min-w-[20px]">1.</span>
             <p>Load a map by entering an address and clicking "Load Map"</p>
           </div>
           <div class="flex items-start">
-            <span class="font-medium text-royal-blue-600 mr-2 min-w-[20px]">2.</span>
+            <span class="font-medium text-gray-600 mr-2 min-w-[20px]">2.</span>
             <p>Choose a component to explore: KD-Tree, Route Planner, or Emergency Service</p>
           </div>
           <div class="flex items-start">
-            <span class="font-medium text-royal-blue-600 mr-2 min-w-[20px]">3.</span>
+            <span class="font-medium text-gray-600 mr-2 min-w-[20px]">3.</span>
             <p>Run evaluations to compare algorithms and visualize results</p>
           </div>
         </div>
@@ -233,8 +238,8 @@
     </main>
 
     <!-- Footer -->
-    <footer class="mt-12" style="background-color: #1e40af; border-top: 2px solid #1e3a8a;">
-      <div class="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 text-center" style="color: #bfdbfe;">
+    <footer class="mt-12" style="background-color: #4b5563; border-top: 2px solid #374151;">
+      <div class="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 text-center" style="color: #d1d5db;">
         <p class="text-xs">Route Planning Project · Tecnológico de Monterrey</p>
       </div>
     </footer>
@@ -269,9 +274,9 @@ const networkType = ref('drive')
 // Computed
 const componentTitle = computed(() => {
   const titles = {
-    kdtree: '🌳 KD-Tree Evaluation',
-    routes: '🚗 Route Planning & Algorithm Comparison',
-    emergency: '🏥 Emergency Service with Voronoi'
+    kdtree: 'KD-Tree Evaluation',
+    routes: 'Route Planning & Algorithm Comparison',
+    emergency: 'Emergency Service with Voronoi'
   }
   return titles[showComponent.value] || ''
 })
@@ -336,7 +341,7 @@ const resetMap = () => {
 
 const handleButtonHover = (event, isHover) => {
   if (!loading.value && mapAddress.value) {
-    event.currentTarget.style.backgroundColor = isHover ? '#1e40af' : '#2563eb'
+    event.currentTarget.style.backgroundColor = isHover ? '#374151' : '#4b5563'
   }
 }
 

@@ -44,22 +44,48 @@ class EmergencyService:
         Returns:
             List of hospital data
         """
+        # Always rebuild KD-tree with current graph nodes to ensure compatibility with network_type
+        coords, node_ids = self.map_loader.get_all_nodes_coords()
+        self.kdtree = KDTree()
+        self.kdtree.build(coords, node_ids)
+        print(f"Built KD-tree with {len(node_ids)} nodes from current graph")
+        print(f"Graph has {self.map_loader.graph.number_of_nodes()} nodes")
+        print(f"Sample node IDs from graph: {list(self.map_loader.graph.nodes())[:5]}")
+        
+        # Track which nodes are already assigned - ONE NODE = ONE HOSPITAL ONLY
+        assigned_nodes = set()  # Set of node_ids already assigned
+        
         if hospital_coords:
             # Use provided coordinates
             print(f"Registering {len(hospital_coords)} hospital coordinates...")
             self.hospitals = []
             
             for i, (lat, lon) in enumerate(hospital_coords):
-                # Find nearest node to this coordinate
+                # Find nearest AVAILABLE node to this coordinate IN THE CURRENT GRAPH
                 x, y = self.map_loader.latlon_to_xy(lat, lon)
                 
-                # Build KD-tree if not exists
-                if not self.kdtree:
-                    coords, node_ids = self.map_loader.get_all_nodes_coords()
-                    self.kdtree = KDTree()
-                    self.kdtree.build(coords, node_ids)
+                # Try to find an available node (not already assigned)
+                nearest_node = None
+                distance = 0
                 
-                nearest_node, distance, _ = self.kdtree.nearest_neighbor((x, y))
+                # Get k nearest neighbors to find an available one
+                k = 20  # Check up to 20 nearest nodes
+                neighbors = self.kdtree.k_nearest_neighbors((x, y), k)
+                
+                for node, dist in neighbors:
+                    # Check if node is available (not assigned) and exists in graph
+                    if node not in assigned_nodes and node in self.map_loader.graph:
+                        nearest_node = node
+                        distance = dist
+                        break
+                
+                # Verify we found an available node
+                if nearest_node is None or nearest_node not in self.map_loader.graph:
+                    print(f"  ❌ Warning: No available node found for Hospital {i+1}, skipping...")
+                    continue
+                
+                # Assign this node
+                assigned_nodes.add(nearest_node)
                 
                 # Convert numpy types to Python native types and handle NaN
                 hospital_data = {
@@ -72,13 +98,15 @@ class EmergencyService:
                 }
                 
                 self.hospitals.append(hospital_data)
-                print(f"  {hospital_data['name']}: Node {nearest_node}")
+                print(f"  ✅ {hospital_data['name']}: Node {nearest_node} (distance: {distance:.1f}m)")
         else:
             # Search for hospitals using OSMnx
             print(f"Searching for hospitals within {search_distance}m...")
             hospitals_features = self.map_loader.find_hospitals(search_distance)
             
             self.hospitals = []
+            temp_hospital_data = []  # Store temporary data before assigning nodes
+            
             for i, feature in enumerate(hospitals_features[:10]):  # Limit to 10
                 # Get centroid of hospital geometry
                 geom = feature.get('geometry')
@@ -89,16 +117,6 @@ class EmergencyService:
                     else:
                         # If it's a point
                         lat, lon = geom.y, geom.x
-                    
-                    # Find nearest node
-                    x, y = self.map_loader.latlon_to_xy(lat, lon)
-                    
-                    if not self.kdtree:
-                        coords, node_ids = self.map_loader.get_all_nodes_coords()
-                        self.kdtree = KDTree()
-                        self.kdtree.build(coords, node_ids)
-                    
-                    nearest_node, distance, _ = self.kdtree.nearest_neighbor((x, y))
                     
                     # Get name from OSM tags
                     tags = feature.get('tags', {})
@@ -116,26 +134,84 @@ class EmergencyService:
                     if not name or (isinstance(name, float) and np.isnan(name)):
                         name = f'Hospital en ({lat:.4f}, {lon:.4f})'
                     
-                    # Convert numpy types to Python native types and handle NaN
-                    hospital_data = {
-                        'id': int(i),
+                    temp_hospital_data.append({
+                        'index': i,
                         'name': str(name),
-                        'lat': float(lat) if not np.isnan(lat) else 0.0,
-                        'lon': float(lon) if not np.isnan(lon) else 0.0,
-                        'nearest_node': int(nearest_node),
-                        'distance_to_node': float(distance) if not np.isnan(distance) else 0.0
-                    }
-                    
-                    self.hospitals.append(hospital_data)
-                    print(f"  {hospital_data['name']}: Node {nearest_node}")
+                        'lat': float(lat),
+                        'lon': float(lon)
+                    })
+            
+            # Now assign nodes - ONE NODE PER HOSPITAL ONLY
+            for hospital_data in temp_hospital_data:
+                # Find nearest AVAILABLE node IN THE CURRENT GRAPH
+                x, y = self.map_loader.latlon_to_xy(hospital_data['lat'], hospital_data['lon'])
+                
+                print(f"\n  Processing: {hospital_data['name']}")
+                print(f"    Location: ({hospital_data['lat']:.6f}, {hospital_data['lon']:.6f})")
+                
+                # Try to find an available node (not already assigned)
+                nearest_node = None
+                distance = 0
+                
+                # Get k nearest neighbors to find an available one
+                k = 20  # Check up to 20 nearest nodes
+                neighbors = self.kdtree.k_nearest_neighbors((x, y), k)
+                
+                found_available = False
+                for idx, (node, dist) in enumerate(neighbors):
+                    # Check if node is available (not assigned) and exists in graph
+                    if node not in assigned_nodes and node in self.map_loader.graph:
+                        nearest_node = node
+                        distance = dist
+                        if idx > 0:
+                            print(f"    ⚠️  Nearest node was occupied, using alternative #{idx+1}")
+                        print(f"    ✓ Assigned to node {nearest_node} (distance: {distance:.1f}m)")
+                        found_available = True
+                        break
+                
+                # CRITICAL: Verify node exists in current graph and is available
+                if not found_available or nearest_node is None or nearest_node not in self.map_loader.graph:
+                    print(f"    ❌ SKIPPING - No available node found in {self.map_loader.network_type} network!")
+                    print(f"       All nearby nodes may be occupied or inaccessible")
+                    continue
+                
+                # Assign this node (mark as used)
+                assigned_nodes.add(nearest_node)
+                
+                # Convert numpy types to Python native types and handle NaN
+                final_hospital_data = {
+                    'id': int(hospital_data['index']),
+                    'name': str(hospital_data['name']),
+                    'lat': float(hospital_data['lat']) if not np.isnan(hospital_data['lat']) else 0.0,
+                    'lon': float(hospital_data['lon']) if not np.isnan(hospital_data['lon']) else 0.0,
+                    'nearest_node': int(nearest_node),
+                    'distance_to_node': float(distance) if not np.isnan(distance) else 0.0
+                }
+                
+                self.hospitals.append(final_hospital_data)
+                print(f"    ✅ REGISTERED: {final_hospital_data['name']} → Node {nearest_node}")
+        
+        # No more shared nodes - each node has exactly one hospital
+        print(f"\n{'='*60}")
+        print(f"  ✓ All hospitals assigned to unique nodes")
+        print(f"  Total nodes used: {len(assigned_nodes)}")
+        print(f"{'='*60}\n")
         
         # Extract hospital nodes
         self.hospital_nodes = [h['nearest_node'] for h in self.hospitals]
         
+        print(f"\n{'='*60}")
         if not self.hospitals:
-            raise ValueError(f"No hospitals found within {search_distance}m. Try increasing the search distance or providing manual coordinates.")
+            print(f"⚠️  WARNING: No hospitals could be registered in {self.map_loader.network_type} network")
+            print(f"   This may be because:")
+            print(f"   1. No hospitals found in the search area")
+            print(f"   2. Hospitals are not accessible via {self.map_loader.network_type} network")
+            print(f"   Try using 'all' network type or increase search distance")
+            raise ValueError(f"No hospitals found within {search_distance}m that are accessible via {self.map_loader.network_type} network. Try 'all' network type or increase search distance.")
         
-        print(f"\nRegistered {len(self.hospitals)} hospitals")
+        print(f"✅ Successfully registered {len(self.hospitals)} hospitals in {self.map_loader.network_type} network")
+        print(f"   Hospital nodes: {self.hospital_nodes}")
+        print(f"{'='*60}\n")
         return self.hospitals
     
     def compute_voronoi_partition(self) -> Voronoi:
@@ -228,16 +304,47 @@ class EmergencyService:
         hospital_info = self.find_nearest_hospital(lat, lon)
         hospital = hospital_info['hospital']
         
-        # Find nearest node to starting location
+        # Find nearest node to starting location IN THE CURRENT GRAPH
         x, y = self.map_loader.latlon_to_xy(lat, lon)
         
+        # Ensure KD-tree is built with current graph nodes
         if not self.kdtree:
             coords, node_ids = self.map_loader.get_all_nodes_coords()
             self.kdtree = KDTree()
             self.kdtree.build(coords, node_ids)
+            print(f"Built KD-tree with {len(node_ids)} nodes from current graph for emergency location")
         
         start_node, _, _ = self.kdtree.nearest_neighbor((x, y))
+        
+        # Verify start node is in graph
+        if start_node not in self.map_loader.graph:
+            print(f"Error: Start node {start_node} not in current graph")
+            return {
+                'algorithm': algorithm,
+                'success': False,
+                'error': f'Start location node {start_node} not found in current graph (network_type mismatch?)',
+                'start_node': int(start_node),
+                'nearest_hospital_id': 0,
+                'distance_to_hospital': 0.0,
+                'search_time': 0.0,
+                'time': 0.0
+            }
+        
         goal_node = hospital['nearest_node']
+        
+        # Verify goal node is in graph
+        if goal_node not in self.map_loader.graph:
+            print(f"Error: Hospital node {goal_node} not in current graph")
+            return {
+                'algorithm': algorithm,
+                'success': False,
+                'error': f'Hospital node {goal_node} not found in current graph (network_type mismatch?)',
+                'start_node': int(start_node),
+                'nearest_hospital_id': int(goal_node),
+                'distance_to_hospital': 0.0,
+                'search_time': 0.0,
+                'time': 0.0
+            }
         
         # Check if nodes are in the same connected component
         # Convert to undirected for connectivity check
