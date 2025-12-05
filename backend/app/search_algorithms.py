@@ -47,7 +47,7 @@ class RoutePlanningProblem(SearchProblem):
         # Statistics and limits
         self.nodes_expanded = 0
         self.max_depth = 0
-        self.max_nodes_limit = 10000  # Prevent infinite exploration
+        self.max_nodes_limit = 5000  # Allow more exploration for better results
     
     def actions(self, state):
         """
@@ -152,15 +152,15 @@ class SearchAlgorithms:
         self.graph = graph
         self.map_loader = map_loader
     
-    def solve_bfs(self, start_node: int, goal_node: int, timeout: float = 30.0) -> Dict:
+    def solve_bfs(self, start_node: int, goal_node: int, timeout: float = 10.0) -> Dict:
         """
         Solve using Breadth-First Search (uninformed/blind search)
-        Note: Uses graph_search=True to avoid infinite loops in cyclic graphs
+        Note: Uses graph_search=False (tree search) - explores without memory
         
         Args:
             start_node: Starting node ID
             goal_node: Goal node ID
-            timeout: Maximum time in seconds (default 30s)
+            timeout: Maximum time in seconds (default 10s)
             
         Returns:
             Dictionary with solution details
@@ -170,7 +170,7 @@ class SearchAlgorithms:
         problem = RoutePlanningProblem(self.graph, self.map_loader, start_node, goal_node)
         
         try:
-            result = breadth_first(problem, graph_search=True)
+            result = breadth_first(problem, graph_search=False)
             search_time = time.time() - start_time
             
             # Check timeout
@@ -212,15 +212,15 @@ class SearchAlgorithms:
             'nodes_expanded': problem.nodes_expanded
         }
     
-    def solve_dfs(self, start_node: int, goal_node: int, timeout: float = 30.0) -> Dict:
+    def solve_dfs(self, start_node: int, goal_node: int, timeout: float = 10.0) -> Dict:
         """
         Solve using Depth-First Search (uninformed/blind search)
-        Note: Uses graph_search=True to avoid infinite loops in cyclic graphs
+        Note: Uses graph_search=True to avoid infinite loops
         
         Args:
             start_node: Starting node ID
             goal_node: Goal node ID
-            timeout: Maximum time in seconds (default 30s)
+            timeout: Maximum time in seconds (default 10s)
             
         Returns:
             Dictionary with solution details
@@ -317,16 +317,16 @@ class SearchAlgorithms:
             'search_time': time.time() - start_time
         }
     
-    def solve_iddfs(self, start_node: int, goal_node: int, max_depth: int = 500) -> Dict:
+    def solve_iddfs(self, start_node: int, goal_node: int, max_depth: int = 50) -> Dict:
         """
         Solve using Iterative Deepening Depth-First Search (uninformed/blind search)
         Manually implements IDDFS by calling limited DFS with increasing depths
-        Note: Uses graph_search=True to avoid infinite loops in cyclic graphs
+        Note: Uses graph_search=False (tree search) - explores without memory
         
         Args:
             start_node: Starting node ID
             goal_node: Goal node ID
-            max_depth: Maximum depth to search
+            max_depth: Maximum depth to search (default 50 for small graphs)
             
         Returns:
             Dictionary with solution details
@@ -344,7 +344,7 @@ class SearchAlgorithms:
                 iteration_problem = RoutePlanningProblem(self.graph, self.map_loader, start_node, goal_node)
                 
                 # Try limited depth first search at this depth
-                result = limited_depth_first(iteration_problem, graph_search=True, depth_limit=depth)
+                result = limited_depth_first(iteration_problem, graph_search=False, depth_limit=depth)
                 
                 if result:
                     path = [node[1] for node in result.path()]

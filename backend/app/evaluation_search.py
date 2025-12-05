@@ -80,7 +80,7 @@ class SearchAlgorithmsEvaluator:
             distance = self.map_loader.calculate_distance(start_node, goal_node)
             
             # Run appropriate algorithm with timeout
-            timeout = 30.0  # 30 seconds per algorithm run
+            timeout = 60.0  # 60 seconds per algorithm run
             if algorithm_name == 'bfs':
                 result = self.search_algorithms.solve_bfs(start_node, goal_node, timeout=timeout)
             elif algorithm_name == 'dfs':

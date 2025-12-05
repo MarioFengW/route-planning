@@ -499,22 +499,57 @@ def evaluate_search_algorithms():
                                 'total_distance': result.get('cost', 0)
                             })
         
-        # Determine best overall algorithm (lowest average time across all ranges)
+        # Determine best overall algorithm using composite score
+        # Weights: Distance 30%, Time 20%, Nodes Expanded 50%
         best_overall = None
-        best_avg_time = float('inf')
+        best_score = float('inf')
+        
+        # First collect all metrics to normalize
+        all_metrics = {'time': [], 'distance': [], 'nodes': []}
+        
+        for label, range_data in raw_results.get('evaluation_ranges', {}).items():
+            if 'summary' in range_data:
+                for algo_stats in range_data['summary'].values():
+                    if algo_stats.get('success_rate', 0) > 0:
+                        all_metrics['time'].append(algo_stats.get('avg_time', 0))
+                        all_metrics['distance'].append(algo_stats.get('avg_cost', 0))
+                        all_metrics['nodes'].append(algo_stats.get('avg_nodes_expanded', 0))
+        
+        # Calculate min/max for normalization
+        time_min = min(all_metrics['time']) if all_metrics['time'] else 0
+        time_max = max(all_metrics['time']) if all_metrics['time'] else 1
+        dist_min = min(all_metrics['distance']) if all_metrics['distance'] else 0
+        dist_max = max(all_metrics['distance']) if all_metrics['distance'] else 1
+        nodes_min = min(all_metrics['nodes']) if all_metrics['nodes'] else 0
+        nodes_max = max(all_metrics['nodes']) if all_metrics['nodes'] else 1
+        
+        # Avoid division by zero
+        time_range = max(time_max - time_min, 0.001)
+        dist_range = max(dist_max - dist_min, 0.001)
+        nodes_range = max(nodes_max - nodes_min, 0.001)
         
         for algo in ['bfs', 'dfs', 'ucs', 'iddfs', 'astar']:
-            total_time = 0
+            total_score = 0
             count = 0
-            for range_key in ['short', 'medium', 'long']:
-                if range_key in by_range and algo in by_range[range_key]:
-                    total_time += by_range[range_key][algo]['avg_time']
-                    count += 1
+            
+            for label, range_data in raw_results.get('evaluation_ranges', {}).items():
+                if 'summary' in range_data and algo.upper() in range_data['summary']:
+                    stats = range_data['summary'][algo.upper()]
+                    if stats.get('success_rate', 0) > 0:
+                        # Normalize metrics (0-1 scale, lower is better)
+                        time_norm = (stats.get('avg_time', 0) - time_min) / time_range
+                        dist_norm = (stats.get('avg_cost', 0) - dist_min) / dist_range
+                        nodes_norm = (stats.get('avg_nodes_expanded', 0) - nodes_min) / nodes_range
+                        
+                        # Composite score with weights: Distance 30%, Time 20%, Nodes 50%
+                        score = (dist_norm * 0.3) + (time_norm * 0.2) + (nodes_norm * 0.5)
+                        total_score += score
+                        count += 1
             
             if count > 0:
-                avg_time = total_time / count
-                if avg_time < best_avg_time:
-                    best_avg_time = avg_time
+                avg_score = total_score / count
+                if avg_score < best_score:
+                    best_score = avg_score
                     best_overall = algo
         
         transformed_results = {
