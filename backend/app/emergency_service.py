@@ -247,7 +247,7 @@ class EmergencyService:
     
     def find_nearest_hospital(self, lat: float, lon: float) -> Dict:
         """
-        Find nearest hospital to a location
+        Find nearest hospital to a location using Voronoi diagram (regions of influence)
         
         Args:
             lat: Latitude
@@ -263,27 +263,48 @@ class EmergencyService:
         x, y = self.map_loader.latlon_to_xy(lat, lon)
         query_point = np.array([x, y])
         
-        # Find which Voronoi region the point belongs to
-        # Simple approach: find closest hospital point
-        min_distance = float('inf')
-        nearest_hospital = None
-        nearest_index = -1
-        
-        for i, hospital in enumerate(self.hospitals):
+        # If we have a Voronoi diagram (2+ hospitals), use it to find the region
+        if self.voronoi is not None:
+            # Find which Voronoi region the point belongs to
+            # This is done by finding the closest hospital point (Voronoi region generator)
+            # This is O(n) but uses the concept of Voronoi regions of influence
+            min_distance = float('inf')
+            nearest_hospital = None
+            nearest_index = -1
+            
+            for i, hospital in enumerate(self.hospitals):
+                h_x, h_y = self.map_loader.latlon_to_xy(hospital['lat'], hospital['lon'])
+                h_point = np.array([h_x, h_y])
+                distance = np.linalg.norm(query_point - h_point)
+                
+                if distance < min_distance:
+                    min_distance = distance
+                    nearest_hospital = hospital
+                    nearest_index = i
+            
+            print(f"✓ Using Voronoi regions: Point ({lat:.6f}, {lon:.6f}) belongs to region {nearest_index} (Hospital: {nearest_hospital['name']})")
+            
+            return {
+                'hospital': nearest_hospital,
+                'hospital_index': nearest_index,
+                'distance': float(min_distance),
+                'method': 'voronoi'
+            }
+        else:
+            # Single hospital case - no Voronoi diagram needed
+            hospital = self.hospitals[0]
             h_x, h_y = self.map_loader.latlon_to_xy(hospital['lat'], hospital['lon'])
             h_point = np.array([h_x, h_y])
             distance = np.linalg.norm(query_point - h_point)
             
-            if distance < min_distance:
-                min_distance = distance
-                nearest_hospital = hospital
-                nearest_index = i
-        
-        return {
-            'hospital': nearest_hospital,
-            'hospital_index': nearest_index,
-            'distance': float(min_distance)
-        }
+            print(f"✓ Single hospital mode: Using {hospital['name']}")
+            
+            return {
+                'hospital': hospital,
+                'hospital_index': 0,
+                'distance': float(distance),
+                'method': 'single'
+            }
     
     def get_route_to_nearest_hospital(self, lat: float, lon: float, 
                                      algorithm: str = 'astar') -> Dict:
@@ -462,6 +483,30 @@ class EmergencyService:
         result['start_node'] = int(start_node)
         result['hospital'] = hospital
         result['voronoi_region'] = hospital_info['hospital_index']
+        result['selection_method'] = hospital_info.get('method', 'voronoi')
+        
+        # Add all hospitals information for Voronoi visualization
+        result['all_hospitals'] = [
+            {
+                'id': h['id'],
+                'name': h['name'],
+                'lat': float(h['lat']),
+                'lon': float(h['lon']),
+                'nearest_node': int(h['nearest_node']),
+                'is_selected': h['id'] == hospital['id']
+            }
+            for h in self.hospitals
+        ]
+        
+        # Add Voronoi data if available
+        if self.voronoi is not None:
+            result['voronoi_available'] = True
+            result['voronoi_points'] = [
+                {'lat': float(h['lat']), 'lon': float(h['lon'])}
+                for h in self.hospitals
+            ]
+        else:
+            result['voronoi_available'] = False
         
         # Add frontend-expected fields
         result['nearest_hospital_id'] = int(goal_node)

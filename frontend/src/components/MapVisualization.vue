@@ -58,6 +58,7 @@
 import { ref, onMounted, watch, nextTick, onUnmounted } from 'vue'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+import { Delaunay } from 'd3-delaunay'
 
 const props = defineProps({
   graphData: {
@@ -87,6 +88,14 @@ const props = defineProps({
   selectedEmergencyNode: {
     type: [String, Number],
     default: null
+  },
+  showVoronoiRegions: {
+    type: Boolean,
+    default: false
+  },
+  selectedHospitalIndex: {
+    type: Number,
+    default: -1
   }
 })
 
@@ -102,6 +111,7 @@ let satelliteLayer = null
 let nodeMarkers = []
 let edgePolylines = []
 let pathPolyline = null
+let voronoiLayers = []
 
 const initMap = () => {
   if (!mapContainer.value || map) return
@@ -148,14 +158,138 @@ const changeLayer = () => {
   }
 }
 
+const drawVoronoiRegions = () => {
+  if (!map || !props.showVoronoiRegions || !props.hospitalInfo || props.hospitalInfo.length < 2) {
+    return
+  }
+  
+  // Clear previous Voronoi layers
+  voronoiLayers.forEach(layer => map.removeLayer(layer))
+  voronoiLayers = []
+  
+  console.log('Drawing Voronoi regions for hospitals:', props.hospitalInfo)
+  
+  // Prepare points for Delaunay triangulation
+  const hospitals = props.hospitalInfo
+  const points = hospitals.map(h => [h.lon, h.lat])
+  
+  // Calculate bounds - include graph nodes if available for better bounds
+  let minLat, maxLat, minLon, maxLon
+  
+  if (props.graphData && props.graphData.nodes && props.graphData.nodes.length > 0) {
+    // Use graph bounds for better coverage
+    const nodeLats = props.graphData.nodes.map(n => n.lat)
+    const nodeLons = props.graphData.nodes.map(n => n.lon)
+    minLat = Math.min(...nodeLats)
+    maxLat = Math.max(...nodeLats)
+    minLon = Math.min(...nodeLons)
+    maxLon = Math.max(...nodeLons)
+    console.log('Using graph bounds for Voronoi diagram')
+  } else {
+    // Fallback to hospital bounds
+    const lats = hospitals.map(h => h.lat)
+    const lons = hospitals.map(h => h.lon)
+    minLat = Math.min(...lats)
+    maxLat = Math.max(...lats)
+    minLon = Math.min(...lons)
+    maxLon = Math.max(...lons)
+  }
+  
+  // Calculate map size (approximate distance in degrees)
+  const latRange = maxLat - minLat
+  const lonRange = maxLon - minLon
+  const mapSize = Math.max(latRange, lonRange)
+  
+  // Dynamic expansion: 15% of the map size (adapts to map extent)
+  // For a 10km map (≈0.09 degrees), expansion ≈ 0.0135 degrees (≈1.5km)
+  // For a 100m map (≈0.0009 degrees), expansion ≈ 0.000135 degrees (≈15m)
+  const expansionFactor = 0.15
+  const latMargin = mapSize * expansionFactor
+  const lonMargin = mapSize * expansionFactor
+  
+  const xmin = minLon - lonMargin
+  const ymin = minLat - latMargin
+  const xmax = maxLon + lonMargin
+  const ymax = maxLat + latMargin
+  
+  console.log('Voronoi bounds:', { 
+    mapSize: mapSize.toFixed(6), 
+    expansion: (mapSize * expansionFactor).toFixed(6),
+    bounds: { xmin, ymin, xmax, ymax } 
+  })
+  
+  // Create Delaunay triangulation and Voronoi diagram
+  const delaunay = Delaunay.from(points)
+  const voronoi = delaunay.voronoi([xmin, ymin, xmax, ymax])
+  
+  // Colors for different regions
+  const colors = [
+    'rgba(239, 68, 68, 0.15)',   // red
+    'rgba(59, 130, 246, 0.15)',  // blue
+    'rgba(34, 197, 94, 0.15)',   // green
+    'rgba(251, 146, 60, 0.15)',  // orange
+    'rgba(168, 85, 247, 0.15)',  // purple
+    'rgba(236, 72, 153, 0.15)',  // pink
+    'rgba(14, 165, 233, 0.15)',  // sky
+    'rgba(234, 179, 8, 0.15)',   // yellow
+    'rgba(99, 102, 241, 0.15)',  // indigo
+    'rgba(139, 92, 246, 0.15)'   // violet
+  ]
+  
+  const borderColors = [
+    '#ef4444', '#3b82f6', '#22c55e', '#fb923c', '#a855f7',
+    '#ec4899', '#0ea5e9', '#eab308', '#6366f1', '#8b5cf6'
+  ]
+  
+  // Draw Voronoi cells
+  for (let i = 0; i < hospitals.length; i++) {
+    const cell = voronoi.cellPolygon(i)
+    if (!cell) continue
+    
+    // Convert to lat/lon coordinates for Leaflet (swap x,y to lat,lon)
+    const latLngs = cell.map(([x, y]) => [y, x])
+    
+    const isSelected = props.selectedHospitalIndex === i
+    const color = isSelected ? 'rgba(34, 197, 94, 0.25)' : colors[i % colors.length]
+    const borderColor = isSelected ? '#22c55e' : borderColors[i % borderColors.length]
+    const weight = isSelected ? 4 : 3
+    
+    // Draw the polygon
+    const polygon = L.polygon(latLngs, {
+      fillColor: color,
+      color: borderColor,
+      weight: weight,
+      opacity: 1,
+      fillOpacity: isSelected ? 0.35 : 0.2,
+      dashArray: isSelected ? '10, 5' : '5, 5'
+    }).addTo(map)
+    
+    polygon.bindPopup(`
+      <div style="font-size: 12px;">
+        <strong style="color: ${borderColor};">${hospitals[i].name}</strong><br>
+        <span style="font-size: 11px;">
+          ${isSelected ? '✓ <strong>Hospital Seleccionado</strong><br>' : ''}
+          Región ${i + 1} - Área de influencia
+        </span>
+      </div>
+    `)
+    
+    voronoiLayers.push(polygon)
+  }
+  
+  console.log(`Drew ${voronoiLayers.length} Voronoi regions`)
+}
+
 const clearLayers = () => {
   nodeMarkers.forEach(marker => map.removeLayer(marker))
   edgePolylines.forEach(polyline => map.removeLayer(polyline))
   if (pathPolyline) map.removeLayer(pathPolyline)
+  voronoiLayers.forEach(layer => map.removeLayer(layer))
   
   nodeMarkers = []
   edgePolylines = []
   pathPolyline = null
+  voronoiLayers = []
 }
 
 const visualizeGraph = () => {
@@ -184,6 +318,9 @@ const visualizeGraph = () => {
       name: h.name
     })))
   }
+  
+  // Draw Voronoi regions first (if enabled) so they appear below other elements
+  drawVoronoiRegions()
   
   // Draw edges (roads)
   edges.forEach(edge => {
@@ -433,6 +570,12 @@ watch(() => props.selectedEmergencyNode, () => {
     visualizeGraph()
   }
 })
+
+watch(() => [props.showVoronoiRegions, props.selectedHospitalIndex], () => {
+  if (map && props.graphData) {
+    visualizeGraph()
+  }
+}, { deep: true })
 </script>
 
 <style scoped>

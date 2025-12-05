@@ -443,6 +443,8 @@
                   :hospitalInfo="registeredHospitals"
                   :selectedEmergencyNode="selectedNode ? selectedNode.id : routeResult.start_node"
                   :selectionMode="false"
+                  :showVoronoiRegions="routeResult.voronoi_available || false"
+                  :selectedHospitalIndex="routeResult.voronoi_region || -1"
                 />
               </div>
 
@@ -548,6 +550,9 @@ const props = defineProps({
 defineEmits(['close'])
 
 const api = useApi()
+
+// API base URL for image requests
+const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 
 // State
 const loading = ref(false)
@@ -669,6 +674,11 @@ const findEmergencyRoute = async () => {
   } finally {
     loading.value = false
   }
+}
+
+const handleVoronoiImageError = (event) => {
+  console.error('Failed to load Voronoi diagram image')
+  event.target.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300"><rect width="400" height="300" fill="%23f3f4f6"/><text x="50%" y="50%" text-anchor="middle" fill="%236b7280" font-family="Arial" font-size="14">Voronoi diagram not available</text></svg>'
 }
 
 // Load hospitals on mount
