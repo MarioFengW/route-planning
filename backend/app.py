@@ -85,18 +85,18 @@ def load_map():
         data = request.get_json()
         
         map_loader = MapLoader()
-        dist = 10000  # Default search distance
+        dist = 10000
         
         if 'address' in data:
             address = data['address']
             dist = data.get('dist', 10000)
-            network_type = data.get('network_type', 'all')  # Changed default to 'all'
+            network_type = data.get('network_type', 'all')
             
             graph = map_loader.load_map_from_address(address, dist, network_type)
         elif 'place' in data:
             place = data['place']
             dist = data.get('dist', 10000)
-            network_type = data.get('network_type', 'all')  # Changed default to 'all'
+            network_type = data.get('network_type', 'all')
             
             graph = map_loader.load_map_from_place(place, network_type)
         else:
@@ -419,7 +419,7 @@ def plan_route():
         else:
             result = search_algorithms.solve_astar(start_node, goal_node)
         
-        # Add coordinates for path visualization
+      
         if result.get('success') and 'path' in result:
             path_coords = []
             for node in result['path']:
@@ -670,7 +670,7 @@ def emergency_route():
         
         result = emergency_service.get_route_to_nearest_hospital(lat, lon, algorithm)
         
-        # Add coordinates for path visualization
+      
         if result.get('success') and 'path' in result:
             path_coords = []
             for node in result['path']:

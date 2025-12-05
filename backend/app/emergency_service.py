@@ -6,7 +6,7 @@ import numpy as np
 from scipy.spatial import Voronoi, voronoi_plot_2d
 from typing import List, Tuple, Dict, Optional
 import matplotlib
-matplotlib.use('Agg')  # Use non-interactive backend
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import contextily as ctx
 from .map_loader import MapLoader
@@ -44,7 +44,6 @@ class EmergencyService:
         Returns:
             List of hospital data
         """
-        # Always rebuild KD-tree with current graph nodes to ensure compatibility with network_type
         coords, node_ids = self.map_loader.get_all_nodes_coords()
         self.kdtree = KDTree()
         self.kdtree.build(coords, node_ids)
@@ -52,42 +51,33 @@ class EmergencyService:
         print(f"Graph has {self.map_loader.graph.number_of_nodes()} nodes")
         print(f"Sample node IDs from graph: {list(self.map_loader.graph.nodes())[:5]}")
         
-        # Track which nodes are already assigned - ONE NODE = ONE HOSPITAL ONLY
-        assigned_nodes = set()  # Set of node_ids already assigned
+        assigned_nodes = set()
         
         if hospital_coords:
-            # Use provided coordinates
             print(f"Registering {len(hospital_coords)} hospital coordinates...")
             self.hospitals = []
             
             for i, (lat, lon) in enumerate(hospital_coords):
-                # Find nearest AVAILABLE node to this coordinate IN THE CURRENT GRAPH
                 x, y = self.map_loader.latlon_to_xy(lat, lon)
                 
-                # Try to find an available node (not already assigned)
                 nearest_node = None
                 distance = 0
                 
-                # Get k nearest neighbors to find an available one
-                k = 20  # Check up to 20 nearest nodes
+                k = 20
                 neighbors = self.kdtree.k_nearest_neighbors((x, y), k)
                 
                 for node, dist in neighbors:
-                    # Check if node is available (not assigned) and exists in graph
                     if node not in assigned_nodes and node in self.map_loader.graph:
                         nearest_node = node
                         distance = dist
                         break
                 
-                # Verify we found an available node
                 if nearest_node is None or nearest_node not in self.map_loader.graph:
-                    print(f"  ❌ Warning: No available node found for Hospital {i+1}, skipping...")
+                    print(f"  Warning: No available node found for Hospital {i+1}, skipping...")
                     continue
                 
-                # Assign this node
                 assigned_nodes.add(nearest_node)
                 
-                # Convert numpy types to Python native types and handle NaN
                 hospital_data = {
                     'id': int(i),
                     'name': f'Hospital {i+1}',
@@ -98,31 +88,26 @@ class EmergencyService:
                 }
                 
                 self.hospitals.append(hospital_data)
-                print(f"  ✅ {hospital_data['name']}: Node {nearest_node} (distance: {distance:.1f}m)")
+                print(f"  {hospital_data['name']}: Node {nearest_node} (distance: {distance:.1f}m)")
         else:
-            # Search for hospitals using OSMnx
             print(f"Searching for hospitals within {search_distance}m...")
             hospitals_features = self.map_loader.find_hospitals(search_distance)
             
             self.hospitals = []
-            temp_hospital_data = []  # Store temporary data before assigning nodes
+            temp_hospital_data = []
             
-            for i, feature in enumerate(hospitals_features[:10]):  # Limit to 10
-                # Get centroid of hospital geometry
+            for i, feature in enumerate(hospitals_features[:10]):
                 geom = feature.get('geometry')
                 if geom:
                     if hasattr(geom, 'centroid'):
                         centroid = geom.centroid
                         lat, lon = centroid.y, centroid.x
                     else:
-                        # If it's a point
                         lat, lon = geom.y, geom.x
                     
-                    # Get name from OSM tags
                     tags = feature.get('tags', {})
                     name = None
                     
-                    # Try different name fields
                     if 'name' in tags:
                         name = tags.get('name')
                     elif 'official_name' in tags:
@@ -130,7 +115,6 @@ class EmergencyService:
                     elif 'alt_name' in tags:
                         name = tags.get('alt_name')
                     
-                    # If no name found or is NaN, use location-based name
                     if not name or (isinstance(name, float) and np.isnan(name)):
                         name = f'Hospital en ({lat:.4f}, {lon:.4f})'
                     
@@ -141,9 +125,7 @@ class EmergencyService:
                         'lon': float(lon)
                     })
             
-            # Now assign nodes - ONE NODE PER HOSPITAL ONLY
             for hospital_data in temp_hospital_data:
-                # Find nearest AVAILABLE node IN THE CURRENT GRAPH
                 x, y = self.map_loader.latlon_to_xy(hospital_data['lat'], hospital_data['lon'])
                 
                 print(f"\n  Processing: {hospital_data['name']}")

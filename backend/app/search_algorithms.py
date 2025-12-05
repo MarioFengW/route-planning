@@ -173,7 +173,6 @@ class SearchAlgorithms:
             result = breadth_first(problem, graph_search=False)
             search_time = time.time() - start_time
             
-            # Check timeout
             if search_time > timeout:
                 return {
                     'algorithm': 'BFS',
@@ -337,13 +336,10 @@ class SearchAlgorithms:
         
         problem = RoutePlanningProblem(self.graph, self.map_loader, start_node, goal_node)
         
-        # Iterative deepening: try increasing depth limits
         for depth in range(1, max_depth + 1):
             try:
-                # Reset nodes expanded counter for each iteration
                 iteration_problem = RoutePlanningProblem(self.graph, self.map_loader, start_node, goal_node)
                 
-                # Try limited depth first search at this depth
                 result = limited_depth_first(iteration_problem, graph_search=False, depth_limit=depth)
                 
                 if result:
@@ -362,11 +358,9 @@ class SearchAlgorithms:
                     }
                     
             except Exception as e:
-                # If error at this depth, continue to next depth
                 if "maximum recursion depth" in str(e).lower():
                     print(f"IDDFS: Recursion limit at depth {depth}, trying next")
                     continue
-                # For other errors, only fail if we've tried all depths
                 if depth == max_depth:
                     search_time = time.time() - start_time
                     print(f"IDDFS: Error at max depth {max_depth}: {str(e)}")
@@ -377,7 +371,6 @@ class SearchAlgorithms:
                         'search_time': search_time
                     }
         
-        # No solution found within depth limit
         search_time = time.time() - start_time
         print(f"IDDFS: No path found within depth limit of {max_depth}")
         return {

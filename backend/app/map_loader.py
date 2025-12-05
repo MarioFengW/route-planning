@@ -20,9 +20,8 @@ class MapLoader:
         self.cache_dir = cache_dir
         self.nodes_data = {}
         self.edges_data = {}
-        self.network_type = 'all'  # Track current network type
+        self.network_type = 'all'
         
-        # Create cache directory if it doesn't exist
         if not os.path.exists(cache_dir):
             os.makedirs(cache_dir)
     
@@ -44,10 +43,8 @@ class MapLoader:
         """
         cache_file = os.path.join(self.cache_dir, f"graph_{hash(address)}_{dist}_{network_type}.pkl")
         
-        # Store network type
         self.network_type = network_type
         
-        # Try to load from cache
         if use_cache and os.path.exists(cache_file):
             print(f"Loading graph from cache: {cache_file}")
             with open(cache_file, 'rb') as f:
@@ -60,24 +57,20 @@ class MapLoader:
                 network_type=network_type
             )
             
-            # Add speed and travel time information
             try:
                 self.graph = ox.add_edge_speeds(self.graph)
                 self.graph = ox.add_edge_travel_times(self.graph)
             except AttributeError:
-                # Older version compatibility
                 try:
                     self.graph = ox.speed.add_edge_speeds(self.graph)
                     self.graph = ox.speed.add_edge_travel_times(self.graph)
                 except:
                     print("Warning: Could not add speed/travel time data")
             
-            # Save to cache
             with open(cache_file, 'wb') as f:
                 pickle.dump(self.graph, f)
             print(f"Graph saved to cache: {cache_file}")
         
-        # Extract nodes and edges data for quick access
         self._extract_nodes_data()
         self._extract_edges_data()
         
@@ -98,10 +91,8 @@ class MapLoader:
         """
         cache_file = os.path.join(self.cache_dir, f"graph_{hash(place_name)}_{network_type}.pkl")
         
-        # Store network type
         self.network_type = network_type
         
-        # Try to load from cache
         if use_cache and os.path.exists(cache_file):
             print(f"Loading graph from cache: {cache_file}")
             with open(cache_file, 'rb') as f:
@@ -111,24 +102,21 @@ class MapLoader:
             self.graph = ox.graph_from_place(
                 place_name, 
                 network_type=network_type
-            )            # Add speed and travel time information
+            )
             try:
                 self.graph = ox.add_edge_speeds(self.graph)
                 self.graph = ox.add_edge_travel_times(self.graph)
             except AttributeError:
-                # Older version compatibility
                 try:
                     self.graph = ox.speed.add_edge_speeds(self.graph)
                     self.graph = ox.speed.add_edge_travel_times(self.graph)
                 except:
                     print("Warning: Could not add speed/travel time data")
             
-            # Save to cache
             with open(cache_file, 'wb') as f:
                 pickle.dump(self.graph, f)
             print(f"Graph saved to cache: {cache_file}")
         
-        # Extract nodes and edges data
         self._extract_nodes_data()
         self._extract_edges_data()
         
@@ -183,7 +171,6 @@ class MapLoader:
         Returns:
             Tuple of (x, y) in graph coordinate system
         """
-        # In OSMnx, x corresponds to longitude and y to latitude
         return lon, lat
     
     def xy_to_latlon(self, x: float, y: float) -> Tuple[float, float]:
@@ -197,7 +184,6 @@ class MapLoader:
         Returns:
             Tuple of (lat, lon)
         """
-        # In OSMnx, x corresponds to longitude and y to latitude
         return y, x
     
     def get_node_coords(self, node_id: int) -> Tuple[float, float]:
@@ -274,10 +260,8 @@ class MapLoader:
             Dictionary with edge data or None
         """
         if self.graph and self.graph.has_edge(node1, node2):
-            # Get the first edge (there might be multiple)
             edges = self.graph.get_edge_data(node1, node2)
             if edges:
-                # Return the first edge data
                 first_key = list(edges.keys())[0]
                 return edges[first_key]
         return None
@@ -298,10 +282,9 @@ class MapLoader:
         """
         try:
             point = (lat, lon)
-            # Add timeout to prevent hanging
             import socket
             old_timeout = socket.getdefaulttimeout()
-            socket.setdefaulttimeout(10)  # 10 second timeout
+            socket.setdefaulttimeout(10)
             
             try:
                 features = ox.features_from_point(point, tags=tags, dist=dist)
@@ -322,7 +305,6 @@ class MapLoader:
             
             return results
         except Exception as e:
-            # Silently fail - this is expected when no features are found
             return []
     
     def find_hospitals(self, dist: int = 5000) -> List[Dict]:
@@ -338,12 +320,10 @@ class MapLoader:
         if not self.graph:
             return []
         
-        # Get all nodes to determine the actual map bounds
         nodes = list(self.graph.nodes())
         if not nodes:
             return []
         
-        # Calculate the actual bounds of the loaded map
         all_lats = [self.nodes_data[node]['lat'] for node in nodes if node in self.nodes_data]
         all_lons = [self.nodes_data[node]['lon'] for node in nodes if node in self.nodes_data]
         
@@ -353,11 +333,9 @@ class MapLoader:
         min_lat, max_lat = min(all_lats), max(all_lats)
         min_lon, max_lon = min(all_lons), max(all_lons)
         
-        # Calculate the center and actual radius of the loaded map
         center_lat = (min_lat + max_lat) / 2
         center_lon = (min_lon + max_lon) / 2
         
-        # Calculate the maximum distance from center to corners of the bounding box
         import geopy.distance
         corner_distances = [
             geopy.distance.distance((center_lat, center_lon), (min_lat, min_lon)).m,
@@ -367,17 +345,14 @@ class MapLoader:
         ]
         max_radius = max(corner_distances)
         
-        # Use the smaller of the provided distance or the actual map radius
         search_dist = min(dist, max_radius)
         
         print(f"Map bounds: lat [{min_lat:.6f}, {max_lat:.6f}], lon [{min_lon:.6f}, {max_lon:.6f}]")
         print(f"Map center: ({center_lat:.6f}, {center_lon:.6f})")
         print(f"Map radius: {max_radius:.0f}m, requested: {dist}m, using: {search_dist:.0f}m")
         
-        # Search for hospitals with multiple tag combinations
         hospitals = []
         
-        # Try different tag combinations (limit attempts to avoid hanging)
         tag_combinations = [
             {'amenity': 'hospital'},
             {'amenity': 'clinic'},
@@ -391,14 +366,12 @@ class MapLoader:
                 if features:
                     print(f"  Found {len(features)} features with tags {tags}")
                     hospitals.extend(features)
-                    # If we found hospitals, we can stop searching
                     if len(hospitals) >= 3:
                         break
             except Exception as e:
                 print(f"  No data for tags {tags}: {str(e)[:100]}")
                 continue
         
-        # Filter hospitals to only include those within the actual loaded map bounds
         filtered_hospitals = []
         for hospital in hospitals:
             geom = hospital.get('geometry')
@@ -408,7 +381,6 @@ class MapLoader:
                 else:
                     h_lat, h_lon = geom.y, geom.x
                 
-                # Check if hospital is within map bounds
                 if min_lat <= h_lat <= max_lat and min_lon <= h_lon <= max_lon:
                     filtered_hospitals.append(hospital)
                 else:
@@ -416,7 +388,6 @@ class MapLoader:
                     name = tags.get('name', 'Unknown')
                     print(f"  Filtered out hospital '{name}' at ({h_lat:.6f}, {h_lon:.6f}) - outside map bounds")
         
-        # Remove duplicates based on location
         unique_hospitals = []
         seen_locations = set()
         for hospital in filtered_hospitals:
@@ -431,9 +402,9 @@ class MapLoader:
                     unique_hospitals.append(hospital)
         
         if not unique_hospitals:
-            print("⚠️  No hospitals found in OpenStreetMap data within the loaded map area")
+            print("No hospitals found in OpenStreetMap data within the loaded map area")
         else:
-            print(f"✓ Found {len(unique_hospitals)} unique hospitals within map bounds")
+            print(f"Found {len(unique_hospitals)} unique hospitals within map bounds")
         
         return unique_hospitals
     

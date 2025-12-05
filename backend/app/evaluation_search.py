@@ -241,7 +241,6 @@ class SearchAlgorithmsEvaluator:
         print("=" * 60)
         print(f"Graph has {len(self.all_nodes)} nodes")
         
-        # Define distance ranges as requested
         ranges = [
             (0, 1000, "Short distance (< 1000m)"),
             (1000, 5000, "Medium distance (1000m - 5000m)"),
@@ -260,12 +259,10 @@ class SearchAlgorithmsEvaluator:
             )
             all_results[label] = range_results
         
-        # Overall summary
         print(f"\n\n{'='*60}")
         print("OVERALL COMPARISON")
         print(f"{'='*60}")
         
-        # Determine best algorithm for each range
         best_algorithms = {}
         for label, range_results in all_results.items():
             if 'statistics' in range_results:
