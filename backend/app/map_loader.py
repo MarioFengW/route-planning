@@ -232,7 +232,7 @@ class MapLoader:
     
     def calculate_distance(self, node1: int, node2: int) -> float:
         """
-        Calculate distance between two nodes in meters
+        Calculate distance between two nodes in meters using geopy with Haversine formula
         
         Args:
             node1: First node ID
