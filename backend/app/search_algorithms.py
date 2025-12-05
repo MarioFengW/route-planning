@@ -1,6 +1,18 @@
 """
 Search algorithms implementation using SimpleAI
-Implements: BFS, DFS, UCS, IDDFS, and A*
+
+UNINFORMED/BLIND SEARCH (no heuristic):
+- BFS (Breadth-First Search) - explores level by level
+- DFS (Depth-First Search) - explores depth-first
+- IDDFS (Iterative Deepening DFS) - combines DFS with BFS advantages
+
+INFORMED SEARCH (uses cost/heuristic information):
+- UCS (Uniform Cost Search) - uses path cost g(n) to prioritize nodes
+- A* - uses f(n) = g(n) + h(n) with Euclidean heuristic
+
+Note: All algorithms use graph_search=True to avoid infinite loops in cyclic graphs.
+The classification (informed/uninformed) refers to whether they use problem-specific
+information (heuristics/costs), not the search strategy (graph vs tree search).
 """
 from simpleai.search import SearchProblem, breadth_first, depth_first, uniform_cost, limited_depth_first, astar
 from simpleai.search.models import SearchNode
@@ -15,8 +27,7 @@ class RoutePlanningProblem(SearchProblem):
     Search problem for route planning using SimpleAI
     """
     
-    def __init__(self, graph, map_loader, start_node: int, goal_node: int, 
-                 heuristic_type: str = 'euclidean'):
+    def __init__(self, graph, map_loader, start_node: int, goal_node: int):
         """
         Initialize route planning problem
         
@@ -25,19 +36,18 @@ class RoutePlanningProblem(SearchProblem):
             map_loader: MapLoader instance
             start_node: Starting node ID
             goal_node: Goal node ID
-            heuristic_type: Type of heuristic ('euclidean', 'haversine', 'manhattan')
         """
         self.graph = graph
         self.map_loader = map_loader
         self.goal_node = goal_node
-        self.heuristic_type = heuristic_type
         
         # Call parent constructor with initial state
         super().__init__(initial_state=start_node)
         
-        # Statistics
+        # Statistics and limits
         self.nodes_expanded = 0
         self.max_depth = 0
+        self.max_nodes_limit = 10000  # Prevent infinite exploration
     
     def actions(self, state):
         """
@@ -50,6 +60,11 @@ class RoutePlanningProblem(SearchProblem):
             List of successor node IDs
         """
         self.nodes_expanded += 1
+        
+        # Prevent excessive node expansion
+        if self.nodes_expanded > self.max_nodes_limit:
+            return []
+        
         return self.map_loader.get_successors(state)
     
     def result(self, state, action):
@@ -98,6 +113,7 @@ class RoutePlanningProblem(SearchProblem):
     def heuristic(self, state):
         """
         Heuristic function for A* (estimated distance to goal)
+        Uses Euclidean distance
         
         Args:
             state: Current node ID
@@ -105,14 +121,7 @@ class RoutePlanningProblem(SearchProblem):
         Returns:
             Estimated distance to goal
         """
-        if self.heuristic_type == 'euclidean':
-            return self._euclidean_distance(state, self.goal_node)
-        elif self.heuristic_type == 'haversine':
-            return self._haversine_distance(state, self.goal_node)
-        elif self.heuristic_type == 'manhattan':
-            return self._manhattan_distance(state, self.goal_node)
-        else:
-            return 0
+        return self._euclidean_distance(state, self.goal_node)
     
     def _euclidean_distance(self, node1: int, node2: int) -> float:
         """Calculate Euclidean distance between two nodes"""
@@ -124,27 +133,6 @@ class RoutePlanningProblem(SearchProblem):
             dy = coord2[1] - coord1[1]
             # Approximate conversion: 1 degree ≈ 111km
             return math.sqrt(dx**2 + dy**2) * 111000
-        return 0
-    
-    def _haversine_distance(self, node1: int, node2: int) -> float:
-        """Calculate Haversine distance between two nodes (great circle distance)"""
-        coord1 = self.map_loader.get_node_latlon(node1)
-        coord2 = self.map_loader.get_node_latlon(node2)
-        
-        if coord1 and coord2:
-            return geopy.distance.distance(coord1, coord2).m
-        return 0
-    
-    def _manhattan_distance(self, node1: int, node2: int) -> float:
-        """Calculate Manhattan distance between two nodes"""
-        coord1 = self.map_loader.get_node_coords(node1)
-        coord2 = self.map_loader.get_node_coords(node2)
-        
-        if coord1 and coord2:
-            dx = abs(coord2[0] - coord1[0])
-            dy = abs(coord2[1] - coord1[1])
-            # Approximate conversion: 1 degree ≈ 111km
-            return (dx + dy) * 111000
         return 0
 
 
@@ -164,13 +152,15 @@ class SearchAlgorithms:
         self.graph = graph
         self.map_loader = map_loader
     
-    def solve_bfs(self, start_node: int, goal_node: int) -> Dict:
+    def solve_bfs(self, start_node: int, goal_node: int, timeout: float = 30.0) -> Dict:
         """
-        Solve using Breadth-First Search
+        Solve using Breadth-First Search (uninformed/blind search)
+        Note: Uses graph_search=True to avoid infinite loops in cyclic graphs
         
         Args:
             start_node: Starting node ID
             goal_node: Goal node ID
+            timeout: Maximum time in seconds (default 30s)
             
         Returns:
             Dictionary with solution details
@@ -182,6 +172,16 @@ class SearchAlgorithms:
         try:
             result = breadth_first(problem, graph_search=True)
             search_time = time.time() - start_time
+            
+            # Check timeout
+            if search_time > timeout:
+                return {
+                    'algorithm': 'BFS',
+                    'success': False,
+                    'error': f'Timeout exceeded ({timeout}s)',
+                    'search_time': search_time,
+                    'nodes_expanded': problem.nodes_expanded
+                }
             
             if result:
                 path = [node[1] for node in result.path()]
@@ -200,22 +200,27 @@ class SearchAlgorithms:
                 'algorithm': 'BFS',
                 'success': False,
                 'error': str(e),
-                'search_time': search_time
+                'search_time': search_time,
+                'nodes_expanded': problem.nodes_expanded
             }
         
         return {
             'algorithm': 'BFS',
             'success': False,
-            'search_time': time.time() - start_time
+            'error': 'No path found',
+            'search_time': time.time() - start_time,
+            'nodes_expanded': problem.nodes_expanded
         }
     
-    def solve_dfs(self, start_node: int, goal_node: int) -> Dict:
+    def solve_dfs(self, start_node: int, goal_node: int, timeout: float = 30.0) -> Dict:
         """
-        Solve using Depth-First Search
+        Solve using Depth-First Search (uninformed/blind search)
+        Note: Uses graph_search=True to avoid infinite loops in cyclic graphs
         
         Args:
             start_node: Starting node ID
             goal_node: Goal node ID
+            timeout: Maximum time in seconds (default 30s)
             
         Returns:
             Dictionary with solution details
@@ -227,6 +232,16 @@ class SearchAlgorithms:
         try:
             result = depth_first(problem, graph_search=True)
             search_time = time.time() - start_time
+            
+            # Check timeout
+            if search_time > timeout:
+                return {
+                    'algorithm': 'DFS',
+                    'success': False,
+                    'error': f'Timeout exceeded ({timeout}s)',
+                    'search_time': search_time,
+                    'nodes_expanded': problem.nodes_expanded
+                }
             
             if result:
                 path = [node[1] for node in result.path()]
@@ -245,18 +260,21 @@ class SearchAlgorithms:
                 'algorithm': 'DFS',
                 'success': False,
                 'error': str(e),
-                'search_time': search_time
+                'search_time': search_time,
+                'nodes_expanded': problem.nodes_expanded
             }
         
         return {
             'algorithm': 'DFS',
             'success': False,
-            'search_time': time.time() - start_time
+            'error': 'No path found',
+            'search_time': time.time() - start_time,
+            'nodes_expanded': problem.nodes_expanded
         }
     
     def solve_ucs(self, start_node: int, goal_node: int) -> Dict:
         """
-        Solve using Uniform Cost Search
+        Solve using Uniform Cost Search (informed search - uses cost information)
         
         Args:
             start_node: Starting node ID
@@ -301,8 +319,9 @@ class SearchAlgorithms:
     
     def solve_iddfs(self, start_node: int, goal_node: int, max_depth: int = 500) -> Dict:
         """
-        Solve using Iterative Deepening Depth-First Search
+        Solve using Iterative Deepening Depth-First Search (uninformed/blind search)
         Manually implements IDDFS by calling limited DFS with increasing depths
+        Note: Uses graph_search=True to avoid infinite loops in cyclic graphs
         
         Args:
             start_node: Starting node ID
@@ -368,14 +387,13 @@ class SearchAlgorithms:
             'search_time': search_time
         }
     
-    def solve_astar(self, start_node: int, goal_node: int, heuristic_type: str = 'haversine') -> Dict:
+    def solve_astar(self, start_node: int, goal_node: int) -> Dict:
         """
-        Solve using A* search
+        Solve using A* search with Euclidean heuristic (informed search - uses heuristic)
         
         Args:
             start_node: Starting node ID
             goal_node: Goal node ID
-            heuristic_type: Type of heuristic to use
             
         Returns:
             Dictionary with solution details
@@ -386,8 +404,7 @@ class SearchAlgorithms:
             self.graph, 
             self.map_loader, 
             start_node, 
-            goal_node,
-            heuristic_type=heuristic_type
+            goal_node
         )
         
         try:
@@ -397,7 +414,7 @@ class SearchAlgorithms:
             if result:
                 path = [node[1] for node in result.path()]
                 return {
-                    'algorithm': f'A* ({heuristic_type})',
+                    'algorithm': 'A* (Euclidean)',
                     'success': True,
                     'path': path,
                     'path_length': len(path),
@@ -408,14 +425,14 @@ class SearchAlgorithms:
         except Exception as e:
             search_time = time.time() - start_time
             return {
-                'algorithm': f'A* ({heuristic_type})',
+                'algorithm': 'A* (Euclidean)',
                 'success': False,
                 'error': str(e),
                 'search_time': search_time
             }
         
         return {
-            'algorithm': f'A* ({heuristic_type})',
+            'algorithm': 'A* (Euclidean)',
             'success': False,
             'search_time': time.time() - start_time
         }
@@ -462,8 +479,7 @@ class SearchAlgorithms:
         # IDDFS
         results.append(self.solve_iddfs(start_node, goal_node))
         
-        # A* with different heuristics
-        results.append(self.solve_astar(start_node, goal_node, 'haversine'))
-        results.append(self.solve_astar(start_node, goal_node, 'euclidean'))
+        # A* with Euclidean heuristic
+        results.append(self.solve_astar(start_node, goal_node))
         
         return results

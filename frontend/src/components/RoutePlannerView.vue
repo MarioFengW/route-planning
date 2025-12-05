@@ -385,10 +385,16 @@
           </h3>
           <div class="text-center">
             <div class="text-5xl font-bold text-yellow-700 uppercase mb-2">
-              {{ evaluationResults.best_overall_algorithm }}
+              {{ evaluationResults.overall_recommendation || 'A*' }}
             </div>
-            <p class="text-sm text-yellow-800">
-              Best overall performance considering speed, path quality, and success rate
+            <p class="text-sm text-yellow-800 mt-3">
+              <strong>Based on composite score</strong>
+            </p>
+            <p class="text-xs text-yellow-700 mt-2">
+              Evaluation criteria: Distance (50%), Time (30%), Nodes Expanded (20%)
+            </p>
+            <p class="text-xs text-yellow-600 mt-1" v-if="['astar', 'ucs'].includes(evaluationResults.overall_recommendation)">
+              ✓ Guarantees optimal (shortest) paths
             </p>
           </div>
         </div>
@@ -606,8 +612,8 @@ const runEvaluation = async () => {
       evaluationResults.value.by_range = {}
     }
     
-    const bestAlgo = evaluationResults.value.best_overall_algorithm || 'unknown'
-    successMessage.value = `Evaluation completed! Best algorithm: ${bestAlgo.toUpperCase()}`
+    const bestAlgo = evaluationResults.value.overall_recommendation?.toUpperCase() || 'A*'
+    successMessage.value = `Evaluation completed! Best algorithm: ${bestAlgo} (based on distance, time, and nodes)`
 
     setTimeout(() => {
       successMessage.value = null

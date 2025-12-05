@@ -79,19 +79,24 @@ class SearchAlgorithmsEvaluator:
             
             distance = self.map_loader.calculate_distance(start_node, goal_node)
             
-            # Run appropriate algorithm
+            # Run appropriate algorithm with timeout
+            timeout = 30.0  # 30 seconds per algorithm run
             if algorithm_name == 'bfs':
-                result = self.search_algorithms.solve_bfs(start_node, goal_node)
+                result = self.search_algorithms.solve_bfs(start_node, goal_node, timeout=timeout)
             elif algorithm_name == 'dfs':
-                result = self.search_algorithms.solve_dfs(start_node, goal_node)
+                result = self.search_algorithms.solve_dfs(start_node, goal_node, timeout=timeout)
             elif algorithm_name == 'ucs':
                 result = self.search_algorithms.solve_ucs(start_node, goal_node)
             elif algorithm_name == 'iddfs':
                 result = self.search_algorithms.solve_iddfs(start_node, goal_node)
             elif algorithm_name == 'astar':
-                result = self.search_algorithms.solve_astar(start_node, goal_node, 'haversine')
+                result = self.search_algorithms.solve_astar(start_node, goal_node)
             else:
                 continue
+            
+            # Check if timed out or hit node limit
+            if not result.get('success'):
+                print(f"    ⚠️ {result.get('error', 'Failed')} - Nodes expanded: {result.get('nodes_expanded', 'N/A')}")
             
             # Add pair information
             result['pair_index'] = i
@@ -265,16 +270,76 @@ class SearchAlgorithmsEvaluator:
         for label, range_results in all_results.items():
             if 'statistics' in range_results:
                 stats = range_results['statistics']
-                # Find algorithm with best average time among successful ones
+                # Find algorithm with best score considering time, distance, and nodes
                 valid_algos = {k: v for k, v in stats.items() 
-                              if v.get('avg_time') is not None}
+                              if v.get('avg_distance') is not None and v.get('success_rate', 0) > 0}
                 if valid_algos:
-                    best_algo = min(valid_algos.items(), 
-                                  key=lambda x: x[1]['avg_time'])
-                    best_algorithms[label] = best_algo[0]
+                    # Calculate composite score for each algorithm
+                    # Lower is better for all metrics
+                    scores = {}
+                    
+                    # Get min/max for normalization
+                    min_time = min(v['avg_time'] for v in valid_algos.values())
+                    max_time = max(v['avg_time'] for v in valid_algos.values())
+                    min_dist = min(v['avg_distance'] for v in valid_algos.values())
+                    max_dist = max(v['avg_distance'] for v in valid_algos.values())
+                    min_nodes = min(v['avg_nodes_expanded'] for v in valid_algos.values())
+                    max_nodes = max(v['avg_nodes_expanded'] for v in valid_algos.values())
+                    
+                    for algo, metrics in valid_algos.items():
+                        # Normalize each metric to 0-1 scale (avoid division by zero)
+                        time_norm = (metrics['avg_time'] - min_time) / (max_time - min_time) if max_time > min_time else 0
+                        dist_norm = (metrics['avg_distance'] - min_dist) / (max_dist - min_dist) if max_dist > min_dist else 0
+                        nodes_norm = (metrics['avg_nodes_expanded'] - min_nodes) / (max_nodes - min_nodes) if max_nodes > min_nodes else 0
+                        
+                        # Weighted score: distance (50%), time (30%), nodes (20%)
+                        # Distance is most important for route quality
+                        score = (dist_norm * 0.5) + (time_norm * 0.3) + (nodes_norm * 0.2)
+                        scores[algo] = score
+                    
+                    # Find algorithm with lowest (best) score
+                    best_algo_name = min(scores.items(), key=lambda x: x[1])[0]
+                    best_algo_stats = valid_algos[best_algo_name]
+                    
+                    best_algorithms[label] = best_algo_name
                     print(f"\n{label}:")
-                    print(f"  Best algorithm: {best_algo[0].upper()}")
-                    print(f"  Avg time: {best_algo[1]['avg_time']*1000:.3f} ms")
+                    print(f"  Best: {best_algo_name.upper()}")
+                    print(f"    Score: {scores[best_algo_name]:.3f} (lower is better)")
+                    print(f"    Avg Distance: {best_algo_stats['avg_distance']:.1f}m")
+                    print(f"    Avg Time: {best_algo_stats['avg_time']:.2f}ms")
+                    print(f"    Avg Nodes Expanded: {best_algo_stats['avg_nodes_expanded']:.1f}")
+                    print(f"    Path Quality: {'Optimal' if best_algo_name in ['astar', 'ucs'] else 'May be suboptimal'}")
+        
+        # Overall recommendation based on all ranges
+        print(f"\n\n{'='*60}")
+        print("OVERALL BEST ALGORITHM")
+        print(f"{'='*60}")
+        
+        # Count which algorithm won most ranges
+        if best_algorithms:
+            from collections import Counter
+            algo_wins = Counter(best_algorithms.values())
+            overall_best = algo_wins.most_common(1)[0][0]
+            
+            print(f"Winner: {overall_best.upper()}")
+            print(f"\nWins by range:")
+            for label, algo in best_algorithms.items():
+                print(f"  {label}: {algo.upper()}")
+            
+            print(f"\nEvaluation criteria:")
+            print(f"  • Distance (50% weight) - Path quality")
+            print(f"  • Time (30% weight) - Execution speed")
+            print(f"  • Nodes Expanded (20% weight) - Efficiency")
+            
+            if overall_best in ['astar', 'ucs']:
+                print(f"\n✓ {overall_best.upper()} guarantees optimal (shortest) paths")
+            else:
+                print(f"\n⚠ {overall_best.upper()} may find suboptimal paths")
+        else:
+            overall_best = 'astar'
+            print("Using A* as default recommendation")
+        
+        print(f"{'='*60}\n")
         
         return {
             'graph_stats': {
@@ -282,7 +347,8 @@ class SearchAlgorithmsEvaluator:
                 'num_edges': self.map_loader.graph.number_of_edges()
             },
             'evaluation_ranges': all_results,
-            'best_algorithms': best_algorithms
+            'best_algorithms': best_algorithms,
+            'overall_recommendation': overall_best
         }
     
     def save_results(self, results: Dict, filename: str = 'search_evaluation.json'):

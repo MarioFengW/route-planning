@@ -439,7 +439,7 @@ class EmergencyService:
         elif algorithm == 'iddfs':
             result = self.search_algorithms.solve_iddfs(start_node, goal_node)
         else:  # default to A*
-            result = self.search_algorithms.solve_astar(start_node, goal_node, 'haversine')
+            result = self.search_algorithms.solve_astar(start_node, goal_node)
         
         # Check if route was found
         if not result.get('success'):
